@@ -658,7 +658,7 @@ export default function Estoque() {
                 <div className="flex items-center gap-2"><Camera className="h-4 w-4 text-primary" /><h3 className="text-sm font-semibold text-foreground">Scanner</h3></div>
                 <button onClick={stopCamera}><X className="h-5 w-5 text-muted-foreground" /></button>
               </div>
-              <video ref={videoRef} className="w-full rounded-xl aspect-video bg-black" />
+              <div id="barcode-scanner-div" className="w-full rounded-xl overflow-hidden" />
               <p className="text-xs text-center text-muted-foreground">Aponte a câmera para o código de barras</p>
             </div>
           </div>
