@@ -213,7 +213,6 @@ export default function Dashboard() {
         });
       }
     }
-    // Add stock alerts
     list.push(...stockAlerts);
     return list;
   }, [data, totals, isCurrentMonth, elapsed, now, currentMetas, stockAlerts]);
@@ -281,12 +280,17 @@ export default function Dashboard() {
 
   function VariationBadge({ current, previous, showLabel = false }: { current: number; previous: number; showLabel?: boolean }) {
     const v = monthVariation(current, previous);
-    if (!v) return <span className="text-[10px] text-muted-foreground">{showLabel ? "Sem dados anteriores" : ""}</span>;
-    const color = v.positive ? "#30D158" : "#FF453A";
-    const arrow = v.positive ? "▲" : "▼";
+    if (!v) return <span className="text-[0.85rem] text-foreground/70">{showLabel ? "Sem dados anteriores" : ""}</span>;
+    const isPositive = v.positive;
     return (
-      <span className="text-[10px] font-semibold" style={{ color }}>
-        {arrow} {Math.abs(v.pct).toFixed(0)}%{showLabel ? " vs mês anterior" : ""}
+      <span
+        className="inline-flex items-center gap-1 text-[0.85rem] font-semibold px-2.5 py-1 rounded-full"
+        style={{
+          background: isPositive ? 'rgba(48,209,88,0.2)' : 'rgba(255,69,58,0.2)',
+          color: isPositive ? '#30D158' : '#FF453A',
+        }}
+      >
+        {isPositive ? "▲" : "▼"} {Math.abs(v.pct).toFixed(0)}%{showLabel ? " vs mês anterior" : ""}
       </span>
     );
   }
@@ -296,28 +300,28 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Visão geral do faturamento</p>
+          <h1 className="text-3xl font-extrabold text-foreground">Dashboard</h1>
+          <p className="text-base text-foreground/70">Visão geral do faturamento</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
             <button onClick={() => setShowPicker(!showPicker)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-foreground bg-secondary">
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-base font-semibold text-foreground bg-secondary">
               {MESES[currentMonth].substring(0, 3)} {currentYear}
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <ChevronDown className="h-5 w-5 text-foreground/70" />
             </button>
             {showPicker && (
               <div className="absolute right-0 top-full mt-2 z-50 p-3 rounded-2xl w-64 bg-popover border border-border backdrop-blur-xl">
                 <div className="flex gap-2 mb-3">
                   {[2025, 2026, 2027].map(y => (
                     <button key={y} onClick={() => setYear(y)}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-medium ${y === currentYear ? 'bg-primary text-foreground' : 'text-muted-foreground'}`}>{y}</button>
+                      className={`flex-1 py-1.5 rounded-lg text-sm font-medium ${y === currentYear ? 'bg-primary text-foreground' : 'text-foreground/70'}`}>{y}</button>
                   ))}
                 </div>
                 <div className="grid grid-cols-3 gap-1">
                   {MESES.map((m, i) => (
                     <button key={i} onClick={() => { setMonth(i); setShowPicker(false); }}
-                      className={`py-2 rounded-lg text-xs font-medium transition ${i === currentMonth ? 'bg-primary text-foreground' : 'text-muted-foreground hover:bg-muted'}`}>
+                      className={`py-2 rounded-lg text-sm font-medium transition ${i === currentMonth ? 'bg-primary text-foreground' : 'text-foreground/70 hover:bg-muted'}`}>
                       {m.substring(0, 3)}
                     </button>
                   ))}
@@ -329,18 +333,18 @@ export default function Dashboard() {
       </div>
 
       {/* Vendor Filter */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <Users className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+      <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-none">
+        <Users className="h-5 w-5 flex-shrink-0 text-foreground/70" />
         <div className="segmented-control">
           <button
             onClick={() => setVendedor(null)}
-            className={`segmented-btn ${!vendedorParam ? 'active' : ''}`}>
+            className={`segmented-btn text-[0.85rem] ${!vendedorParam ? 'active' : ''}`}>
             Todos
           </button>
           {data.vendedores.map(v => (
             <button key={v}
               onClick={() => setVendedor(v)}
-              className={`segmented-btn ${vendedorParam === v ? 'active' : ''}`}>
+              className={`segmented-btn text-[0.85rem] ${vendedorParam === v ? 'active' : ''}`}>
               {v}
             </button>
           ))}
@@ -349,28 +353,28 @@ export default function Dashboard() {
 
       {/* Alerts Banner */}
       {!dismissedAlerts && alerts.length > 0 && (
-        <div className="glass-card p-4 space-y-2">
+        <div className="glass-card p-6 space-y-3" style={{ borderColor: 'rgba(255,255,255,0.15)' }}>
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
-              <Bell className="h-4 w-4 text-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">Alertas ({alerts.length})</h3>
+              <Bell className="h-5 w-5 text-foreground" />
+              <h3 className="text-base font-semibold text-foreground">Alertas ({alerts.length})</h3>
             </div>
-            <button onClick={() => setDismissedAlerts(true)}><X className="h-4 w-4 text-muted-foreground" /></button>
+            <button onClick={() => setDismissedAlerts(true)}><X className="h-5 w-5 text-foreground/70" /></button>
           </div>
           {alerts.map(a => (
             <button key={a.id} onClick={() => { navigate(a.route); setDismissedAlerts(true); }}
-              className="w-full text-left flex items-start gap-3 p-3 rounded-xl transition hover:bg-muted"
-              style={{ background: a.color + '08', border: `1px solid ${a.color}20` }}>
-              <a.icon className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: a.color }} />
-              <span className="text-xs text-foreground leading-relaxed">{a.message}</span>
+              className="w-full text-left flex items-start gap-3 p-4 rounded-xl transition hover:bg-muted"
+              style={{ background: a.color + '12', border: `1px solid ${a.color}30` }}>
+              <a.icon className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: a.color }} />
+              <span className="text-[0.85rem] text-foreground leading-relaxed">{a.message}</span>
             </button>
           ))}
         </div>
       )}
 
       {/* Compare Toggle */}
-      <div className="flex items-center gap-2">
-        <GitCompare className="h-4 w-4 text-muted-foreground" />
+      <div className="flex items-center gap-3">
+        <GitCompare className="h-5 w-5 text-foreground/70" />
         <div className="segmented-control">
           {([
             { key: "none" as CompareMode, label: "Sem comparação" },
@@ -378,7 +382,7 @@ export default function Dashboard() {
             { key: "prev_year" as CompareMode, label: "Ano anterior" },
           ]).map(opt => (
             <button key={opt.key} onClick={() => setCompareMode(opt.key)}
-              className={`segmented-btn ${compareMode === opt.key ? 'active' : ''}`}>
+              className={`segmented-btn text-[0.85rem] ${compareMode === opt.key ? 'active' : ''}`}>
               {opt.label}
             </button>
           ))}
@@ -386,55 +390,55 @@ export default function Dashboard() {
       </div>
 
       {/* Total KPI Card */}
-      <div className="rounded-2xl p-5 relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, rgba(10,132,255,0.15), rgba(10,132,255,0.05))', border: '1px solid rgba(10,132,255,0.2)' }}>
-        <div className="flex items-center gap-2 mb-3">
-          <TrendingUp className="h-5 w-5" style={{ color: '#0A84FF' }} />
-          <span className="text-sm font-medium text-muted-foreground">
+      <div className="rounded-2xl p-6 relative overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, rgba(10,132,255,0.18), rgba(10,132,255,0.06))', border: '1px solid rgba(10,132,255,0.3)' }}>
+        <div className="flex items-center gap-2 mb-4">
+          <TrendingUp className="h-6 w-6" style={{ color: '#0A84FF' }} />
+          <span className="text-base font-semibold text-foreground/70">
             Faturamento Total — {MESES[currentMonth]}
             {vendedorParam && <span className="ml-1 text-[#0A84FF]">({vendedorParam})</span>}
           </span>
         </div>
-          <div className="flex items-end justify-between mb-1">
+        <div className="flex items-end justify-between mb-2">
           <div>
-            <span className="text-3xl font-bold text-foreground">{formatCurrency(totalGeral)}</span>
-            <div className="mt-0.5"><VariationBadge current={totalGeral} previous={prevTotalGeral} showLabel /></div>
+            <span className="text-[2.5rem] font-extrabold text-foreground leading-tight">{formatCurrency(totalGeral)}</span>
+            <div className="mt-1"><VariationBadge current={totalGeral} previous={prevTotalGeral} showLabel /></div>
           </div>
-          <span className="text-sm font-semibold px-2 py-0.5 rounded-full"
-            style={{ background: `${progressColor(pctTotal)}20`, color: progressColor(pctTotal) }}>
+          <span className="text-base font-bold px-3 py-1.5 rounded-full"
+            style={{ background: `${progressColor(pctTotal)}25`, color: progressColor(pctTotal) }}>
             {pctTotal.toFixed(0)}%
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-secondary">
+          <div className="flex-1 h-2.5 rounded-full overflow-hidden bg-secondary">
             <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(pctTotal, 100)}%`, background: progressColor(pctTotal) }} />
           </div>
-          <span className="text-xs text-muted-foreground">Meta: {formatCurrency(metaTotal)}</span>
+          <span className="text-[0.85rem] text-foreground/70 font-medium">Meta: {formatCurrency(metaTotal)}</span>
         </div>
       </div>
 
       {/* Category KPI Grid */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-5">
         {(["produto", "servico", "contrato", "acessorio"] as Categoria[]).map((cat) => {
           const Icon = ICONS[cat];
           const val = totals[cat];
           const meta = currentMetas[cat];
           const pct = meta > 0 ? (val / meta) * 100 : 0;
           return (
-            <div key={cat} className="glass-card p-4 relative">
-              <div className="flex items-center justify-between mb-2">
+            <div key={cat} className="glass-card p-6 relative" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Icon className="h-4 w-4" style={{ color: CAT_COLORS[cat] }} />
-                  <span className="text-xs font-medium text-muted-foreground">{CATEGORIA_LABELS[cat]}</span>
+                  <Icon className="h-5 w-5" style={{ color: CAT_COLORS[cat] }} />
+                  <span className="text-base font-semibold text-foreground/70">{CATEGORIA_LABELS[cat]}</span>
                 </div>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                  style={{ background: `${progressColor(pct)}20`, color: progressColor(pct) }}>
+                <span className="text-[0.8rem] font-bold px-2.5 py-1 rounded-full"
+                  style={{ background: `${progressColor(pct)}25`, color: progressColor(pct) }}>
                   {pct.toFixed(0)}%
                 </span>
               </div>
-              <p className="text-2xl font-bold text-foreground mb-0.5">{formatCurrency(val)}</p>
-              <VariationBadge current={val} previous={prevTotals[cat]} showLabel />
-              <div className="h-1.5 rounded-full overflow-hidden bg-secondary">
+              <p className="text-[2.5rem] font-extrabold text-foreground mb-1 leading-tight">{formatCurrency(val)}</p>
+              <div className="mb-2"><VariationBadge current={val} previous={prevTotals[cat]} showLabel /></div>
+              <div className="h-2 rounded-full overflow-hidden bg-secondary">
                 <div className="h-full rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(pct, 100)}%`, background: CAT_COLORS[cat] }} />
               </div>
@@ -444,34 +448,34 @@ export default function Dashboard() {
       </div>
 
       {/* Projection Section */}
-      <div className="glass-card p-4 space-y-4">
+      <div className="glass-card p-6 space-y-5" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-foreground">Projeção Mensal</h3>
-          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-secondary text-muted-foreground">
+          <h3 className="text-base font-semibold text-foreground">Projeção Mensal</h3>
+          <span className="text-[0.85rem] px-3 py-1 rounded-full font-medium bg-secondary text-foreground/70">
             {isCurrentMonth ? `Dia ${elapsed}/${totalDays}` : `${totalDays} dias`}
           </span>
         </div>
-        <div className="p-3 rounded-xl" style={{ background: 'rgba(10,132,255,0.08)', border: '1px solid rgba(10,132,255,0.15)' }}>
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-xs text-muted-foreground">Projeção Total</span>
-            <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full"
-              style={{ background: `${progressColor(pctTotalProj)}20`, color: progressColor(pctTotalProj) }}>
+        <div className="p-5 rounded-xl" style={{ background: 'rgba(10,132,255,0.1)', border: '1px solid rgba(10,132,255,0.2)' }}>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-[0.85rem] text-foreground/70 font-medium">Projeção Total</span>
+            <span className="text-[0.85rem] font-bold px-2.5 py-1 rounded-full"
+              style={{ background: `${progressColor(pctTotalProj)}25`, color: progressColor(pctTotalProj) }}>
               {pctTotalProj.toFixed(0)}%
             </span>
           </div>
-          <p className="text-xl font-bold text-foreground">{formatCurrency(totalProj)}</p>
+          <p className="text-[2rem] font-extrabold text-foreground">{formatCurrency(totalProj)}</p>
         </div>
         <div className="space-y-2">
           {projections.map(p => (
-            <div key={p.cat} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+            <div key={p.cat} className="flex items-center justify-between py-3 border-b border-foreground/10 last:border-0">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full" style={{ background: CAT_COLORS[p.cat] }} />
-                <span className="text-xs text-foreground">{CATEGORIA_LABELS[p.cat]}</span>
+                <span className="w-3 h-3 rounded-full" style={{ background: CAT_COLORS[p.cat] }} />
+                <span className="text-[0.85rem] text-foreground font-medium">{CATEGORIA_LABELS[p.cat]}</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs font-medium text-foreground">{formatCurrency(p.proj)}</span>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                  style={{ background: `${progressColor(p.pctProj)}20`, color: progressColor(p.pctProj) }}>
+                <span className="text-[0.85rem] font-semibold text-foreground">{formatCurrency(p.proj)}</span>
+                <span className="text-[0.8rem] font-bold px-2.5 py-1 rounded-full"
+                  style={{ background: `${progressColor(p.pctProj)}25`, color: progressColor(p.pctProj) }}>
                   {p.pctProj.toFixed(0)}%
                 </span>
               </div>
@@ -481,19 +485,19 @@ export default function Dashboard() {
       </div>
 
       {/* Client Ranking */}
-      <div className="glass-card p-4 space-y-4">
+      <div className="glass-card p-6 space-y-5" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Trophy className="h-4 w-4" style={{ color: '#FFD60A' }} />
-            <h3 className="text-sm font-semibold text-foreground">Ranking de Clientes</h3>
+            <Trophy className="h-5 w-5" style={{ color: '#FFD60A' }} />
+            <h3 className="text-base font-semibold text-foreground">Ranking de Clientes</h3>
           </div>
           <div className="segmented-control">
             <button onClick={() => setRankSort("valor")}
-              className={`segmented-btn ${rankSort === "valor" ? "active" : ""}`}>
+              className={`segmented-btn text-[0.85rem] ${rankSort === "valor" ? "active" : ""}`}>
               Valor
             </button>
             <button onClick={() => setRankSort("count")}
-              className={`segmented-btn ${rankSort === "count" ? "active" : ""}`}>
+              className={`segmented-btn text-[0.85rem] ${rankSort === "count" ? "active" : ""}`}>
               Qtd
             </button>
           </div>
@@ -501,14 +505,14 @@ export default function Dashboard() {
 
         {clientRanking.length === 0 ? (
           <div className="text-center py-8">
-            <Users className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">Nenhum lançamento neste período</p>
+            <Users className="h-10 w-10 mx-auto mb-2 text-foreground/70" />
+            <p className="text-[0.85rem] text-foreground/70">Nenhum lançamento neste período</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {clientRanking.slice(0, 10).map((c, idx) => (
-              <div key={c.cliente} className="flex items-center gap-3 p-3 rounded-xl transition hover:bg-muted bg-muted/50 border border-border">
-                <span className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+              <div key={c.cliente} className="flex items-center gap-3 p-4 rounded-xl transition hover:bg-muted bg-muted/50 border border-foreground/10">
+                <span className="w-8 h-8 rounded-full flex items-center justify-center text-[0.85rem] font-bold flex-shrink-0"
                   style={{
                     background: idx === 0 ? '#FFD60A20' : idx === 1 ? 'rgba(255,255,255,0.08)' : idx === 2 ? '#BF5AF220' : 'rgba(255,255,255,0.04)',
                     color: idx === 0 ? '#FFD60A' : idx === 1 ? '#AEAEB2' : idx === 2 ? '#BF5AF2' : '#8E8E93',
@@ -516,18 +520,18 @@ export default function Dashboard() {
                   {idx + 1}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{c.cliente}</p>
+                  <p className="text-base font-semibold text-foreground truncate">{c.cliente}</p>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground">
-                      <Hash className="h-3 w-3 inline mr-0.5" />{c.count} lançamento{c.count !== 1 ? 's' : ''}
+                    <span className="text-[0.85rem] text-foreground/70">
+                      <Hash className="h-3.5 w-3.5 inline mr-0.5" />{c.count} lançamento{c.count !== 1 ? 's' : ''}
                     </span>
                   </div>
                 </div>
-                <span className="text-sm font-semibold text-foreground flex-shrink-0">{formatCurrency(c.valor)}</span>
+                <span className="text-base font-bold text-foreground flex-shrink-0">{formatCurrency(c.valor)}</span>
               </div>
             ))}
             {clientRanking.length > 10 && (
-              <p className="text-center text-[10px] pt-1 text-muted-foreground">
+              <p className="text-center text-[0.85rem] pt-1 text-foreground/70">
                 +{clientRanking.length - 10} clientes
               </p>
             )}
@@ -536,14 +540,14 @@ export default function Dashboard() {
       </div>
 
       {/* Chart */}
-      <div className="glass-card p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-4">Faturamento Mensal — {currentYear}</h3>
-        <ResponsiveContainer width="100%" height={260}>
+      <div className="glass-card p-6" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
+        <h3 className="text-base font-semibold text-foreground mb-5">Faturamento Mensal — {currentYear}</h3>
+        <ResponsiveContainer width="100%" height={320}>
           <BarChart data={chartData} barCategoryGap="20%">
-            <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fill: '#8E8E93', fontSize: 11 }} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#8E8E93', fontSize: 11 }} width={50} />
+            <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fill: '#AEAEB2', fontSize: 13 }} />
+            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#AEAEB2', fontSize: 13 }} width={60} />
             <Tooltip
-              contentStyle={{ background: 'rgba(30,30,30,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: 'white', fontSize: 12 }}
+              contentStyle={{ background: 'rgba(30,30,30,0.95)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, color: 'white', fontSize: 14 }}
               formatter={(value: number) => formatCurrency(value)}
               cursor={{ fill: 'rgba(255,255,255,0.03)' }}
             />
@@ -559,11 +563,11 @@ export default function Dashboard() {
             )}
           </BarChart>
         </ResponsiveContainer>
-        <div className="flex flex-wrap gap-3 mt-3 justify-center">
+        <div className="flex flex-wrap gap-4 mt-4 justify-center">
           {(["produto", "servico", "contrato", "acessorio"] as Categoria[]).map(cat => (
-            <div key={cat} className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ background: CAT_COLORS[cat] }} />
-              <span className="text-[11px] text-muted-foreground">{CATEGORIA_LABELS[cat]}</span>
+            <div key={cat} className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full" style={{ background: CAT_COLORS[cat] }} />
+              <span className="text-[0.85rem] text-foreground/70">{CATEGORIA_LABELS[cat]}</span>
             </div>
           ))}
         </div>
