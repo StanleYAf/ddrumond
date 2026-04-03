@@ -258,20 +258,31 @@ export default function Estoque() {
             { facingMode: "environment" },
             { fps: 10, qrbox: { width: 250, height: 150 } },
             (decodedText) => {
-              handleBarcodeScanRef.current(decodedText);
-              stopCamera();
+              const code = decodedText.trim();
+              console.log("[Scanner] Código lido:", code);
+              // Stop scanner first, then process
+              stopCamera().then(() => {
+                handleBarcodeScanRef.current(code);
+              });
             },
             () => {}
           );
-        } catch { toast.error("Erro ao acessar câmera"); setShowCamera(false); }
-      }, 300);
-    } catch { toast.error("Erro ao carregar leitor"); setShowCamera(false); }
+        } catch (err) { console.error("[Scanner] start error:", err); toast.error("Erro ao acessar câmera"); setShowCamera(false); }
+      }, 400);
+    } catch (err) { console.error("[Scanner] import error:", err); toast.error("Erro ao carregar leitor"); setShowCamera(false); }
   }
 
-  function stopCamera() {
-    if (scannerRef.current) {
-      try { scannerRef.current.stop().then(() => scannerRef.current?.clear()); } catch {}
-      scannerRef.current = null;
+  async function stopCamera() {
+    const scanner = scannerRef.current;
+    scannerRef.current = null;
+    if (scanner) {
+      try {
+        const state = scanner.getState();
+        if (state === 2) { // SCANNING
+          await scanner.stop();
+        }
+        scanner.clear();
+      } catch (err) { console.error("[Scanner] stop error:", err); }
     }
     setShowCamera(false);
   }
