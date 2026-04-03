@@ -84,7 +84,7 @@ export default function Estoque() {
   const [saving, setSaving] = useState(false);
   const [editProduct, setEditProduct] = useState<Produto | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const scannerDivRef = useRef<HTMLDivElement>(null);
   const scannerRef = useRef<any>(null);
 
   // Movimentações filters
@@ -244,22 +244,30 @@ export default function Estoque() {
   async function startCamera() {
     setShowCamera(true);
     try {
-      const { BrowserMultiFormatReader } = await import("@zxing/library");
-      const reader = new BrowserMultiFormatReader();
-      scannerRef.current = reader;
+      const { Html5Qrcode } = await import("html5-qrcode");
       setTimeout(async () => {
-        if (!videoRef.current) return;
         try {
-          await reader.decodeFromVideoDevice(undefined, videoRef.current, (result) => {
-            if (result) { handleBarcodeScan(result.getText()); stopCamera(); }
-          });
+          const scanner = new Html5Qrcode("barcode-scanner-div");
+          scannerRef.current = scanner;
+          await scanner.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 150 } },
+            (decodedText) => {
+              handleBarcodeScan(decodedText);
+              stopCamera();
+            },
+            () => {}
+          );
         } catch { toast.error("Erro ao acessar câmera"); setShowCamera(false); }
       }, 300);
     } catch { toast.error("Erro ao carregar leitor"); setShowCamera(false); }
   }
 
   function stopCamera() {
-    if (scannerRef.current) { try { scannerRef.current.reset(); } catch {} scannerRef.current = null; }
+    if (scannerRef.current) {
+      try { scannerRef.current.stop().then(() => scannerRef.current?.clear()); } catch {}
+      scannerRef.current = null;
+    }
     setShowCamera(false);
   }
 
@@ -650,7 +658,7 @@ export default function Estoque() {
                 <div className="flex items-center gap-2"><Camera className="h-4 w-4 text-primary" /><h3 className="text-sm font-semibold text-foreground">Scanner</h3></div>
                 <button onClick={stopCamera}><X className="h-5 w-5 text-muted-foreground" /></button>
               </div>
-              <video ref={videoRef} className="w-full rounded-xl aspect-video bg-black" />
+              <div id="barcode-scanner-div" className="w-full rounded-xl overflow-hidden" />
               <p className="text-xs text-center text-muted-foreground">Aponte a câmera para o código de barras</p>
             </div>
           </div>
