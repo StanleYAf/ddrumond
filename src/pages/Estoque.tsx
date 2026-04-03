@@ -86,6 +86,7 @@ export default function Estoque() {
   const searchRef = useRef<HTMLInputElement>(null);
   const scannerDivRef = useRef<HTMLDivElement>(null);
   const scannerRef = useRef<any>(null);
+  const handleBarcodeScanRef = useRef<(code: string) => void>(() => {});
 
   // Movimentações filters
   const now = new Date();
@@ -230,16 +231,20 @@ export default function Estoque() {
       toast.info(`Código ${code} capturado — preencha os dados do produto`);
       return;
     }
-    const found = produtos.find(p => p.codigo_barras === code);
+    const trimmed = code.trim();
+    const found = produtos.find(p => p.codigo_barras?.trim() === trimmed);
     if (found) { setQuickMove({ produto: found, tipo: null, quantidade: 1, observacao: "", documento_ref: "" }); setSearchQuery(""); }
     else {
       // Not found — offer to register
       resetForm();
-      setFormCodigo(code);
+      setFormCodigo(trimmed);
       setShowForm(true);
-      toast.info(`Produto não encontrado — cadastre com o código ${code}`);
+      toast.info(`Produto não encontrado — cadastre com o código ${trimmed}`);
     }
   }
+
+  // Keep ref always up-to-date so the scanner callback never uses stale state
+  useEffect(() => { handleBarcodeScanRef.current = handleBarcodeScan; });
 
   async function startCamera() {
     setShowCamera(true);
@@ -253,7 +258,7 @@ export default function Estoque() {
             { facingMode: "environment" },
             { fps: 10, qrbox: { width: 250, height: 150 } },
             (decodedText) => {
-              handleBarcodeScan(decodedText);
+              handleBarcodeScanRef.current(decodedText);
               stopCamera();
             },
             () => {}
