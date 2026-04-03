@@ -258,7 +258,7 @@ export default function Estoque() {
             { facingMode: "environment" },
             { fps: 10, qrbox: { width: 250, height: 150 } },
             (decodedText) => {
-              handleBarcodeScan(decodedText);
+              handleBarcodeScanRef.current(decodedText);
               stopCamera();
             },
             () => {}
