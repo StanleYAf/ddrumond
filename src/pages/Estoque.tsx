@@ -231,16 +231,20 @@ export default function Estoque() {
       toast.info(`Código ${code} capturado — preencha os dados do produto`);
       return;
     }
-    const found = produtos.find(p => p.codigo_barras === code);
+    const trimmed = code.trim();
+    const found = produtos.find(p => p.codigo_barras?.trim() === trimmed);
     if (found) { setQuickMove({ produto: found, tipo: null, quantidade: 1, observacao: "", documento_ref: "" }); setSearchQuery(""); }
     else {
       // Not found — offer to register
       resetForm();
-      setFormCodigo(code);
+      setFormCodigo(trimmed);
       setShowForm(true);
-      toast.info(`Produto não encontrado — cadastre com o código ${code}`);
+      toast.info(`Produto não encontrado — cadastre com o código ${trimmed}`);
     }
   }
+
+  // Keep ref always up-to-date so the scanner callback never uses stale state
+  useEffect(() => { handleBarcodeScanRef.current = handleBarcodeScan; });
 
   async function startCamera() {
     setShowCamera(true);
