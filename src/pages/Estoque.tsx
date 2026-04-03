@@ -84,7 +84,7 @@ export default function Estoque() {
   const [saving, setSaving] = useState(false);
   const [editProduct, setEditProduct] = useState<Produto | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const scannerDivRef = useRef<HTMLDivElement>(null);
   const scannerRef = useRef<any>(null);
 
   // Movimentações filters
