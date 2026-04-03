@@ -86,6 +86,7 @@ export default function Estoque() {
   const searchRef = useRef<HTMLInputElement>(null);
   const scannerDivRef = useRef<HTMLDivElement>(null);
   const scannerRef = useRef<any>(null);
+  const handleBarcodeScanRef = useRef<(code: string) => void>(() => {});
 
   // Movimentações filters
   const now = new Date();
