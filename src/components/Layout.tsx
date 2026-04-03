@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
-import { LayoutDashboard, FilePlus, BarChart3, PhoneCall, Settings, FileBarChart, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, FilePlus, BarChart3, PhoneCall, Settings, FileBarChart, Sun, Moon, Package } from "lucide-react";
 import { useTheme } from "@/lib/themeContext";
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { title: "Lançamentos", url: "/lancamentos", icon: FilePlus },
   { title: "Indicadores", url: "/indicadores", icon: BarChart3 },
   { title: "Pós-venda", url: "/pos-venda", icon: PhoneCall },
+  { title: "Estoque", url: "/estoque", icon: Package },
   { title: "Relatórios", url: "/relatorios", icon: FileBarChart },
   { title: "Config", url: "/configuracoes", icon: Settings },
 ];
