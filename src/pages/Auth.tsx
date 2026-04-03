@@ -132,6 +132,33 @@ export default function Auth() {
                 </button>
               </div>
             </div>
+            {isLogin && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!email) {
+                      toast.error("Digite seu email primeiro");
+                      return;
+                    }
+                    setSubmitting(true);
+                    const { supabase } = await import("@/integrations/supabase/client");
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                      redirectTo: `${window.location.origin}/reset-password`,
+                    });
+                    setSubmitting(false);
+                    if (error) {
+                      toast.error(error.message);
+                    } else {
+                      toast.success("Email de redefinição enviado! Verifique sua caixa de entrada.");
+                    }
+                  }}
+                  className="text-sm text-primary hover:underline transition-colors"
+                >
+                  Esqueci minha senha
+                </button>
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? (
                 <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
