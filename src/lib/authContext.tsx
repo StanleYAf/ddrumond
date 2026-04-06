@@ -45,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setCargo(null);
         setDisplayName(null);
+        setAprovado(null);
       }
       setLoading(false);
     });
