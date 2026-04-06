@@ -8,9 +8,15 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground text-sm">Carregando...</p>
+        <div className="flex flex-col items-center gap-5 animate-in fade-in zoom-in-95 duration-500">
+          <div className="relative">
+            <div className="w-14 h-14 rounded-full border-[3px] border-muted" />
+            <div className="absolute inset-0 w-14 h-14 rounded-full border-[3px] border-primary border-t-transparent animate-spin" />
+          </div>
+          <div className="text-center space-y-1">
+            <p className="text-sm font-medium text-foreground">Autenticando</p>
+            <p className="text-xs text-muted-foreground">Verificando suas credenciais...</p>
+          </div>
         </div>
       </div>
     );
