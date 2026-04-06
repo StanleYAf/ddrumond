@@ -39,6 +39,14 @@ export default function Configuracoes() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
 
+  // Admin: user management
+  const [allUsers, setAllUsers] = useState<ProfileRow[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const [savingUserId, setSavingUserId] = useState<string | null>(null);
+
+  const isAdmin = currentCargo === "admin";
+
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
@@ -54,6 +62,32 @@ export default function Configuracoes() {
         setProfileLoading(false);
       });
   }, [user]);
+
+  const fetchAllUsers = useCallback(async () => {
+    if (!isAdmin) return;
+    setUsersLoading(true);
+    const { data, error } = await supabase.from("profiles").select("id, user_id, display_name, cargo, created_at").order("created_at", { ascending: true });
+    if (!error && data) setAllUsers(data as ProfileRow[]);
+    setUsersLoading(false);
+  }, [isAdmin]);
+
+  useEffect(() => { fetchAllUsers(); }, [fetchAllUsers]);
+
+  async function updateUserCargo(profileUserId: string, newCargo: string) {
+    setSavingUserId(profileUserId);
+    const { error } = await supabase.from("profiles").update({ cargo: newCargo || null }).eq("user_id", profileUserId);
+    if (error) {
+      toast.error("Erro ao atualizar cargo");
+    } else {
+      setAllUsers(prev => prev.map(u => u.user_id === profileUserId ? { ...u, cargo: newCargo || null } : u));
+      if (profileUserId === user?.id) {
+        setProfileCargo(newCargo);
+        await refreshProfile();
+      }
+      toast.success("Cargo atualizado");
+    }
+    setSavingUserId(null);
+  }
 
   async function saveProfile() {
     if (!user) return;
