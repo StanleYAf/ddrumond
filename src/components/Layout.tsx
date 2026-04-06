@@ -18,6 +18,7 @@ const navItems = [
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { mode, toggleMode } = useTheme();
+  const { signOut, user } = useAuth();
   const isDark = mode === "dark";
 
   return (
