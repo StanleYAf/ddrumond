@@ -23,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [cargo, setCargo] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [aprovado, setAprovado] = useState<boolean | null>(null);
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await supabase.from("profiles").select("cargo, display_name").eq("user_id", userId).maybeSingle();
