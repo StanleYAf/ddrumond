@@ -1,9 +1,9 @@
 import { useAuth } from "@/lib/authContext";
 import { Navigate } from "react-router-dom";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Clock } from "lucide-react";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, aprovado, signOut } = useAuth();
 
   if (loading) {
     return (
@@ -20,18 +20,38 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
+  // User exists but not approved yet
+  if (aprovado === false) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background px-4">
+        <div className="w-full max-w-sm text-center space-y-6">
+          <div className="w-16 h-16 rounded-full bg-warning/15 flex items-center justify-center mx-auto">
+            <Clock className="h-8 w-8 text-warning" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground">Conta Pendente</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Sua conta foi criada com sucesso, mas está aguardando aprovação do administrador.
+            Você receberá acesso assim que for aprovado.
+          </p>
+          <button
+            onClick={signOut}
+            className="w-full py-3 rounded-xl text-sm font-semibold bg-secondary text-foreground hover:bg-secondary/80 transition"
+          >
+            Sair
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return <>{children}</>;
 }
 
 export function RoleGuard({ allowed, children }: { allowed: string[]; children: React.ReactNode }) {
   const { cargo } = useAuth();
-  // If no cargo set yet, allow access (user needs to set up profile first)
   if (!cargo) return <>{children}</>;
-  // Admin sees everything
   if (cargo === "admin") return <>{children}</>;
-  // Check if user's cargo is in allowed list
   if (allowed.includes(cargo)) return <>{children}</>;
-  // Access denied
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
       <AlertTriangle className="h-12 w-12 text-destructive" />

@@ -5,7 +5,7 @@ import { useTheme, accentMap, type AccentColor, type ThemeMode } from "@/lib/the
 import { CATEGORIA_LABELS, type Categoria, type AppData } from "@/lib/types";
 import { applyCurrencyMask, parseCurrencyMask, numberToCurrencyMask } from "@/lib/currencyMask";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Plus, Download, Upload, AlertTriangle, Sun, Moon, Check, User, Shield, Users, Search } from "lucide-react";
+import { Trash2, Plus, Download, Upload, AlertTriangle, Sun, Moon, Check, User, Shield, Users, Search, Clock, CheckCircle } from "lucide-react";
 import { ListSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { toast } from "sonner";
@@ -21,7 +21,64 @@ interface ProfileRow {
   user_id: string;
   display_name: string | null;
   cargo: string | null;
+  aprovado: boolean;
   created_at: string;
+}
+
+function UserRow({ u, user, savingUserId, onApprove, onRevoke, onCargo }: {
+  u: ProfileRow; user: any; savingUserId: string | null;
+  onApprove: (id: string) => void; onRevoke: (id: string) => void; onCargo: (id: string, cargo: string) => void;
+}) {
+  return (
+    <div className="p-4 border-b border-border/30 last:border-0 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`w-9 h-9 rounded-full flex items-center justify-center ${u.aprovado ? 'bg-primary/15' : 'bg-warning/15'}`}>
+            {u.aprovado ? <Users className="h-4 w-4 text-primary" /> : <Clock className="h-4 w-4 text-warning" />}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              {u.display_name || "Sem nome"}
+              {u.user_id === user?.id && (
+                <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-medium">Você</span>
+              )}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              Desde {new Date(u.created_at).toLocaleDateString("pt-BR")}
+            </p>
+          </div>
+        </div>
+        {/* Approve / Revoke button */}
+        {u.aprovado ? (
+          <button onClick={() => onRevoke(u.user_id)} disabled={savingUserId === u.user_id || u.user_id === user?.id}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium bg-destructive/10 text-destructive disabled:opacity-30 transition">
+            Revogar
+          </button>
+        ) : (
+          <button onClick={() => onApprove(u.user_id)} disabled={savingUserId === u.user_id}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-500/15 text-emerald-600 disabled:opacity-50 transition">
+            <CheckCircle className="h-3.5 w-3.5" /> Aprovar
+          </button>
+        )}
+      </div>
+      {/* Cargo buttons - only show for approved users */}
+      {u.aprovado && (
+        <div className="grid grid-cols-3 gap-2">
+          {CARGOS.map(c => (
+            <button key={c.value} onClick={() => onCargo(u.user_id, c.value)}
+              disabled={savingUserId === u.user_id}
+              className="p-2 rounded-xl text-center transition disabled:opacity-50"
+              style={{
+                background: u.cargo === c.value ? 'hsl(var(--primary) / 0.15)' : 'hsl(var(--muted))',
+                border: u.cargo === c.value ? '1px solid hsl(var(--primary) / 0.4)' : '1px solid transparent',
+              }}>
+              <p className="text-xs font-semibold" style={{ color: u.cargo === c.value ? 'hsl(var(--primary))' : undefined }}>{c.label}</p>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function Configuracoes() {
@@ -66,7 +123,7 @@ export default function Configuracoes() {
   const fetchAllUsers = useCallback(async () => {
     if (!isAdmin) return;
     setUsersLoading(true);
-    const { data, error } = await supabase.from("profiles").select("id, user_id, display_name, cargo, created_at").order("created_at", { ascending: true });
+    const { data, error } = await supabase.from("profiles").select("id, user_id, display_name, cargo, aprovado, created_at").order("created_at", { ascending: true });
     if (!error && data) setAllUsers(data as ProfileRow[]);
     setUsersLoading(false);
   }, [isAdmin]);
@@ -85,6 +142,34 @@ export default function Configuracoes() {
         await refreshProfile();
       }
       toast.success("Cargo atualizado");
+    }
+    setSavingUserId(null);
+  }
+
+  async function approveUser(profileUserId: string) {
+    setSavingUserId(profileUserId);
+    const { error } = await supabase.from("profiles").update({ aprovado: true }).eq("user_id", profileUserId);
+    if (error) {
+      toast.error("Erro ao aprovar usuário");
+    } else {
+      setAllUsers(prev => prev.map(u => u.user_id === profileUserId ? { ...u, aprovado: true } : u));
+      toast.success("Usuário aprovado");
+    }
+    setSavingUserId(null);
+  }
+
+  async function revokeUser(profileUserId: string) {
+    if (profileUserId === user?.id) {
+      toast.error("Você não pode revogar seu próprio acesso");
+      return;
+    }
+    setSavingUserId(profileUserId);
+    const { error } = await supabase.from("profiles").update({ aprovado: false }).eq("user_id", profileUserId);
+    if (error) {
+      toast.error("Erro ao revogar acesso");
+    } else {
+      setAllUsers(prev => prev.map(u => u.user_id === profileUserId ? { ...u, aprovado: false } : u));
+      toast.success("Acesso revogado");
     }
     setSavingUserId(null);
   }
@@ -254,50 +339,45 @@ export default function Configuracoes() {
             {usersLoading ? (
               <div className="p-6 text-center text-sm text-muted-foreground">Carregando usuários...</div>
             ) : (
-              allUsers
-                .filter(u => {
-                  if (!userSearch.trim()) return true;
-                  const q = userSearch.toLowerCase();
-                  return (u.display_name || "").toLowerCase().includes(q) || u.user_id.toLowerCase().includes(q);
-                })
-                .map(u => (
-                  <div key={u.id} className="p-4 border-b border-border/30 last:border-0 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center">
-                          <Users className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">
-                            {u.display_name || "Sem nome"}
-                            {u.user_id === user?.id && (
-                              <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-medium">Você</span>
-                            )}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground">
-                            Desde {new Date(u.created_at).toLocaleDateString("pt-BR")}
+              <>
+                {/* Pending users first */}
+                {(() => {
+                  const filtered = allUsers.filter(u => {
+                    if (!userSearch.trim()) return true;
+                    const q = userSearch.toLowerCase();
+                    return (u.display_name || "").toLowerCase().includes(q) || u.user_id.toLowerCase().includes(q);
+                  });
+                  const pending = filtered.filter(u => !u.aprovado);
+                  const approved = filtered.filter(u => u.aprovado);
+
+                  return (
+                    <>
+                      {pending.length > 0 && (
+                        <div className="px-4 pt-3 pb-1">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-warning">
+                            Pendentes ({pending.length})
                           </p>
                         </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {CARGOS.map(c => (
-                        <button
-                          key={c.value}
-                          onClick={() => updateUserCargo(u.user_id, c.value)}
-                          disabled={savingUserId === u.user_id}
-                          className="p-2 rounded-xl text-center transition disabled:opacity-50"
-                          style={{
-                            background: u.cargo === c.value ? 'hsl(var(--primary) / 0.15)' : 'hsl(var(--muted))',
-                            border: u.cargo === c.value ? '1px solid hsl(var(--primary) / 0.4)' : '1px solid transparent',
-                          }}
-                        >
-                          <p className="text-xs font-semibold" style={{ color: u.cargo === c.value ? 'hsl(var(--primary))' : undefined }}>{c.label}</p>
-                        </button>
+                      )}
+                      {pending.map(u => (
+                        <UserRow key={u.id} u={u} user={user} savingUserId={savingUserId}
+                          onApprove={approveUser} onRevoke={revokeUser} onCargo={updateUserCargo} />
                       ))}
-                    </div>
-                  </div>
-                ))
+                      {approved.length > 0 && (
+                        <div className="px-4 pt-3 pb-1">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            Aprovados ({approved.length})
+                          </p>
+                        </div>
+                      )}
+                      {approved.map(u => (
+                        <UserRow key={u.id} u={u} user={user} savingUserId={savingUserId}
+                          onApprove={approveUser} onRevoke={revokeUser} onCargo={updateUserCargo} />
+                      ))}
+                    </>
+                  );
+                })()}
+              </>
             )}
 
             <div className="p-3 text-center">

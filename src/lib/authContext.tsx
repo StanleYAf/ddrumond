@@ -8,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   cargo: string | null;
   displayName: string | null;
+  aprovado: boolean | null;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
@@ -22,12 +23,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [cargo, setCargo] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [aprovado, setAprovado] = useState<boolean | null>(null);
 
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data } = await supabase.from("profiles").select("cargo, display_name").eq("user_id", userId).maybeSingle();
+    const { data } = await supabase.from("profiles").select("cargo, display_name, aprovado").eq("user_id", userId).maybeSingle();
     if (data) {
       setCargo(data.cargo || null);
       setDisplayName(data.display_name || null);
+      setAprovado(data.aprovado ?? false);
+    } else {
+      setAprovado(false);
     }
   }, []);
 
@@ -40,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setCargo(null);
         setDisplayName(null);
+        setAprovado(null);
       }
       setLoading(false);
     });
@@ -78,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, cargo, displayName, signUp, signIn, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, loading, cargo, displayName, aprovado, signUp, signIn, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
