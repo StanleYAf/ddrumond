@@ -67,7 +67,7 @@ export default function Configuracoes() {
   const fetchAllUsers = useCallback(async () => {
     if (!isAdmin) return;
     setUsersLoading(true);
-    const { data, error } = await supabase.from("profiles").select("id, user_id, display_name, cargo, created_at").order("created_at", { ascending: true });
+    const { data, error } = await supabase.from("profiles").select("id, user_id, display_name, cargo, aprovado, created_at").order("created_at", { ascending: true });
     if (!error && data) setAllUsers(data as ProfileRow[]);
     setUsersLoading(false);
   }, [isAdmin]);
