@@ -419,7 +419,8 @@ export default function Configuracoes() {
         </div>
       </div>
 
-      {/* Metas Mensais */}
+      {/* Metas Mensais - Admin only */}
+      {isAdmin && (
       <div>
         <p className="ios-section-title">METAS MENSAIS (R$)</p>
         <div className="ios-list-group">
@@ -433,8 +434,10 @@ export default function Configuracoes() {
           ))}
         </div>
       </div>
+      )}
 
-      {/* Metas Semanais */}
+      {/* Metas Semanais - Admin only */}
+      {isAdmin && (
       <div>
         <p className="ios-section-title">METAS SEMANAIS</p>
         <div className="ios-list-group">
@@ -453,8 +456,10 @@ export default function Configuracoes() {
           ))}
         </div>
       </div>
+      )}
 
-      {/* Vendedores */}
+      {/* Vendedores - Admin only */}
+      {isAdmin && (
       <div>
         <p className="ios-section-title">VENDEDORES</p>
         <div className="ios-list-group">
@@ -476,6 +481,7 @@ export default function Configuracoes() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Dados */}
       <div>
