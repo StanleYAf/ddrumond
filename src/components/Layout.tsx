@@ -55,6 +55,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+        {/* Logout */}
+        <div className="p-3 border-t border-border">
+          {user && (
+            <p className="text-[11px] text-muted-foreground truncate mb-2 px-3">{user.email}</p>
+          )}
+          <button onClick={signOut}
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-destructive hover:bg-destructive/10 transition-all">
+            <LogOut className="h-5 w-5" />
+            <span>Sair</span>
+          </button>
+        </div>
       </aside>
 
       {/* Main content */}
