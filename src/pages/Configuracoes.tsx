@@ -279,7 +279,7 @@ export default function Configuracoes() {
     toast.success("Dados importados com sucesso");
   }
 
-  if (loading) return <ListSkeleton />;
+  if (loading) return <ConfigSkeleton />;
   if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />;
 
   return (
