@@ -1,7 +1,8 @@
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
-import { LayoutDashboard, FilePlus, BarChart3, PhoneCall, Settings, FileBarChart, Sun, Moon, Package, Truck } from "lucide-react";
+import { LayoutDashboard, FilePlus, BarChart3, PhoneCall, Settings, FileBarChart, Sun, Moon, Package, Truck, LogOut } from "lucide-react";
 import { useTheme } from "@/lib/themeContext";
+import { useAuth } from "@/lib/authContext";
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -17,6 +18,7 @@ const navItems = [
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { mode, toggleMode } = useTheme();
+  const { signOut, user } = useAuth();
   const isDark = mode === "dark";
 
   return (
@@ -53,6 +55,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+        {/* Logout */}
+        <div className="p-3 border-t border-border">
+          {user && (
+            <p className="text-[11px] text-muted-foreground truncate mb-2 px-3">{user.email}</p>
+          )}
+          <button onClick={signOut}
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-destructive hover:bg-destructive/10 transition-all">
+            <LogOut className="h-5 w-5" />
+            <span>Sair</span>
+          </button>
+        </div>
       </aside>
 
       {/* Main content */}
