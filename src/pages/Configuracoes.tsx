@@ -1,24 +1,68 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAppData } from "@/lib/dataContext";
+import { useAuth } from "@/lib/authContext";
 import { useTheme, accentMap, type AccentColor, type ThemeMode } from "@/lib/themeContext";
 import { CATEGORIA_LABELS, type Categoria, type AppData } from "@/lib/types";
 import { applyCurrencyMask, parseCurrencyMask, numberToCurrencyMask } from "@/lib/currencyMask";
-import { Trash2, Plus, Download, Upload, AlertTriangle, Sun, Moon, Check } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Trash2, Plus, Download, Upload, AlertTriangle, Sun, Moon, Check, User, Shield } from "lucide-react";
 import { ListSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { toast } from "sonner";
 
+const CARGOS = [
+  { value: "dash", label: "Dash", desc: "Acesso ao dashboard, lançamentos, indicadores e pós-venda" },
+  { value: "estoque", label: "Estoque", desc: "Acesso ao estoque e fornecedores" },
+  { value: "admin", label: "Admin", desc: "Acesso completo a todas as áreas" },
+];
+
 export default function Configuracoes() {
   const { data, setData, loading, error, undoDelete } = useAppData();
+  const { user, refreshProfile, cargo: currentCargo, displayName: currentDisplayName } = useAuth();
   const { mode, accent, setMode, setAccent, toggleMode } = useTheme();
   const [novoVendedor, setNovoVendedor] = useState("");
   const [showImportConfirm, setShowImportConfirm] = useState(false);
   const [pendingImport, setPendingImport] = useState<AppData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Profile state
+  const [profileName, setProfileName] = useState("");
+  const [profileCargo, setProfileCargo] = useState("");
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileSaving, setProfileSaving] = useState(false);
+
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("display_name, cargo").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setProfileName(data.display_name || "");
+          setProfileCargo(data.cargo || "");
+        }
+        setProfileLoading(false);
+      });
+  }, [user]);
+
+  async function saveProfile() {
+    if (!user) return;
+    setProfileSaving(true);
+    const { error } = await supabase.from("profiles").update({
+      display_name: profileName.trim() || null,
+      cargo: profileCargo || null,
+    }).eq("user_id", user.id);
+    if (error) {
+      toast.error("Erro ao salvar perfil");
+      setProfileSaving(false);
+      return;
+    }
+    await refreshProfile();
+    setProfileSaving(false);
+    toast.success("Perfil atualizado");
+  }
 
   function updateMeta(cat: Categoria, masked: string) {
     const numVal = parseCurrencyMask(masked);
@@ -114,6 +158,50 @@ export default function Configuracoes() {
   return (
     <div className="space-y-6 pb-24">
       <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
+
+      {/* Perfil do Usuário */}
+      <div>
+        <p className="ios-section-title">PERFIL DO USUÁRIO</p>
+        <div className="ios-list-group">
+          <div className="ios-list-item">
+            <div className="flex items-center gap-3">
+              <User className="h-4 w-4 text-primary" />
+              <span className="text-sm text-foreground">Nome</span>
+            </div>
+            <input
+              value={profileName}
+              onChange={e => setProfileName(e.target.value)}
+              placeholder="Seu nome"
+              className="text-right text-sm font-medium text-primary bg-transparent outline-none w-40"
+            />
+          </div>
+          <div className="ios-list-item flex-col items-start gap-3">
+            <div className="flex items-center gap-3 w-full">
+              <Shield className="h-4 w-4 text-primary" />
+              <span className="text-sm text-foreground">Cargo</span>
+            </div>
+            <div className="w-full grid grid-cols-3 gap-2">
+              {CARGOS.map(c => (
+                <button key={c.value} onClick={() => setProfileCargo(c.value)}
+                  className="p-3 rounded-xl text-center transition"
+                  style={{
+                    background: profileCargo === c.value ? 'rgba(10,132,255,0.15)' : 'rgba(255,255,255,0.05)',
+                    border: profileCargo === c.value ? '1px solid rgba(10,132,255,0.4)' : '1px solid transparent',
+                  }}>
+                  <p className="text-sm font-semibold" style={{ color: profileCargo === c.value ? '#0A84FF' : undefined }}>{c.label}</p>
+                  <p className="text-[10px] mt-0.5 text-muted-foreground">{c.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="p-3">
+            <button onClick={saveProfile} disabled={profileSaving || profileLoading}
+              className="w-full h-10 rounded-xl text-sm font-semibold text-primary-foreground bg-primary disabled:opacity-50">
+              {profileSaving ? "Salvando..." : "Salvar Perfil"}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Aparência */}
       <div>

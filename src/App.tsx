@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { DataProvider } from "@/lib/dataContext";
 import { ThemeProvider } from "@/lib/themeContext";
 import { AuthProvider } from "@/lib/authContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ProtectedRoute, RoleGuard } from "@/components/ProtectedRoute";
 import { Layout } from "@/components/Layout";
 import { UndoToast } from "@/components/UndoToast";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -44,14 +44,14 @@ const App = () => (
                         <Layout>
                           <ErrorBoundary fallbackTitle="Erro ao carregar a página">
                             <Routes>
-                              <Route path="/" element={<Index />} />
-                              <Route path="/lancamentos" element={<Lancamentos />} />
-                              <Route path="/indicadores" element={<Indicadores />} />
-                              <Route path="/pos-venda" element={<PosVenda />} />
+                              <Route path="/" element={<RoleGuard allowed={["dash", "admin"]}><Index /></RoleGuard>} />
+                              <Route path="/lancamentos" element={<RoleGuard allowed={["dash", "admin"]}><Lancamentos /></RoleGuard>} />
+                              <Route path="/indicadores" element={<RoleGuard allowed={["dash", "admin"]}><Indicadores /></RoleGuard>} />
+                              <Route path="/pos-venda" element={<RoleGuard allowed={["dash", "admin"]}><PosVenda /></RoleGuard>} />
                               <Route path="/configuracoes" element={<Configuracoes />} />
-                              <Route path="/relatorios" element={<Relatorios />} />
-                              <Route path="/estoque" element={<Estoque />} />
-                              <Route path="/fornecedores" element={<Fornecedores />} />
+                              <Route path="/relatorios" element={<RoleGuard allowed={["dash", "admin"]}><Relatorios /></RoleGuard>} />
+                              <Route path="/estoque" element={<RoleGuard allowed={["estoque", "admin"]}><Estoque /></RoleGuard>} />
+                              <Route path="/fornecedores" element={<RoleGuard allowed={["estoque", "admin"]}><Fornecedores /></RoleGuard>} />
                               <Route path="*" element={<NotFound />} />
                             </Routes>
                           </ErrorBoundary>

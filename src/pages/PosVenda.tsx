@@ -66,7 +66,6 @@ export default function PosVendaPage() {
         : p
       )),
     }));
-    setEditId(null);
     toast.success(`Status atualizado para "${newStatus}"`);
   }
 

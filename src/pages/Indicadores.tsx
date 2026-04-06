@@ -258,30 +258,23 @@ export default function Indicadores() {
       )}
 
       {/* Search + Sort */}
-      <div className="space-y-3">
-        <div className="relative">
+      <div className="flex gap-2 items-center">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setPage(0); }}
             className="ios-input w-full pl-10" placeholder="Buscar vendedor, mês ou semana..." />
         </div>
-        <div className="flex gap-2 overflow-x-auto no-scrollbar">
-          {([
-            { key: "semana" as SortKey, label: "Semana" },
-            { key: "vendedor" as SortKey, label: "Vendedor" },
-            { key: "captacoes" as SortKey, label: "Captações" },
-            { key: "orcamentos" as SortKey, label: "Orçamentos" },
-            { key: "visitas" as SortKey, label: "Visitas" },
-          ]).map(s => (
-            <button key={s.key} onClick={() => toggleSort(s.key)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap"
-              style={{
-                background: sortKey === s.key ? 'rgba(10,132,255,0.15)' : 'rgba(255,255,255,0.05)',
-                color: sortKey === s.key ? '#0A84FF' : '#8E8E93',
-              }}>
-              {s.label}<SortIcon field={s.key} />
-            </button>
-          ))}
-        </div>
+        <select value={sortKey} onChange={e => { setSortKey(e.target.value as SortKey); setPage(0); }}
+          className="ios-input text-xs w-auto min-w-[110px]">
+          <option value="semana">Semana</option>
+          <option value="vendedor">Vendedor</option>
+          <option value="captacoes">Captações</option>
+          <option value="orcamentos">Orçamentos</option>
+          <option value="visitas">Visitas</option>
+        </select>
+        <button onClick={() => setSortAsc(!sortAsc)} className="p-2.5 rounded-xl bg-secondary flex-shrink-0">
+          {sortAsc ? <ChevronUp className="h-4 w-4 text-foreground" /> : <ChevronDown className="h-4 w-4 text-foreground" />}
+        </button>
       </div>
 
       {/* Records List */}

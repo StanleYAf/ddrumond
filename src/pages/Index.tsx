@@ -259,29 +259,16 @@ export default function Dashboard() {
   if (loading) return <DashboardSkeleton />;
   if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />;
 
-  // Always compute prev month for the "vs mês anterior" line
-  const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-  const prevMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-  const prevTotals: Record<Categoria, number> = {
-    produto: sumByMonth(data.lancamentos.produtos, prevMonth, prevMonthYear, vendedorParam),
-    servico: sumByMonth(data.lancamentos.servicos, prevMonth, prevMonthYear, vendedorParam),
-    contrato: sumByMonth(data.lancamentos.contratos, prevMonth, prevMonthYear, vendedorParam),
-    acessorio: sumByMonth(data.lancamentos.acessorios, prevMonth, prevMonthYear, vendedorParam),
-  };
-  const prevTotalGeral = Object.values(prevTotals).reduce((a, b) => a + b, 0);
-
-  function monthVariation(current: number, previous: number): { pct: number; positive: boolean } | null {
-    if (previous === 0 && current === 0) return null;
-    if (previous === 0) return { pct: 100, positive: true };
-    if (current === 0 && previous > 0) return { pct: -100, positive: false };
-    const pct = ((current - previous) / previous) * 100;
-    return { pct, positive: pct >= 0 };
-  }
+  const compLabel = compareMode === "prev_year" ? "vs ano anterior" : "vs mês anterior";
 
   function VariationBadge({ current, previous, showLabel = false }: { current: number; previous: number; showLabel?: boolean }) {
-    const v = monthVariation(current, previous);
-    if (!v) return <span className="text-[0.85rem] text-foreground/70">{showLabel ? "Sem dados anteriores" : ""}</span>;
-    const isPositive = v.positive;
+    if (compareMode === "none") return null;
+    if (previous === 0 && current === 0) return <span className="text-[0.85rem] text-foreground/70">{showLabel ? "Sem dados para comparação" : ""}</span>;
+    let pct: number;
+    let isPositive: boolean;
+    if (previous === 0) { pct = 100; isPositive = true; }
+    else if (current === 0) { pct = -100; isPositive = false; }
+    else { pct = ((current - previous) / previous) * 100; isPositive = pct >= 0; }
     return (
       <span
         className="inline-flex items-center gap-1 text-[0.85rem] font-semibold px-2.5 py-1 rounded-full"
@@ -290,7 +277,7 @@ export default function Dashboard() {
           color: isPositive ? '#30D158' : '#FF453A',
         }}
       >
-        {isPositive ? "▲" : "▼"} {Math.abs(v.pct).toFixed(0)}%{showLabel ? " vs mês anterior" : ""}
+        {isPositive ? "▲" : "▼"} {Math.abs(pct).toFixed(0)}%{showLabel ? ` ${compLabel}` : ""}
       </span>
     );
   }
@@ -402,7 +389,7 @@ export default function Dashboard() {
         <div className="flex items-end justify-between mb-2">
           <div>
             <span className="text-[2.5rem] font-extrabold text-foreground leading-tight">{formatCurrency(totalGeral)}</span>
-            <div className="mt-1"><VariationBadge current={totalGeral} previous={prevTotalGeral} showLabel /></div>
+            <div className="mt-1"><VariationBadge current={totalGeral} previous={compTotalGeral} showLabel /></div>
           </div>
           <span className="text-base font-bold px-3 py-1.5 rounded-full"
             style={{ background: `${progressColor(pctTotal)}25`, color: progressColor(pctTotal) }}>
@@ -437,7 +424,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <p className="text-[2.5rem] font-extrabold text-foreground mb-1 leading-tight">{formatCurrency(val)}</p>
-              <div className="mb-2"><VariationBadge current={val} previous={prevTotals[cat]} showLabel /></div>
+              <div className="mb-2"><VariationBadge current={val} previous={compTotals[cat]} showLabel /></div>
               <div className="h-2 rounded-full overflow-hidden bg-secondary">
                 <div className="h-full rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(pct, 100)}%`, background: CAT_COLORS[cat] }} />

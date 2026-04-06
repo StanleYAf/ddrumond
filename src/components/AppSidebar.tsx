@@ -14,21 +14,29 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const items = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Lançamentos", url: "/lancamentos", icon: FilePlus },
-  { title: "Indicadores", url: "/indicadores", icon: BarChart3 },
-  { title: "Pós-venda", url: "/pos-venda", icon: PhoneCall },
-  { title: "Estoque", url: "/estoque", icon: Package },
-  { title: "Fornecedores", url: "/fornecedores", icon: Truck },
-  { title: "Configurações", url: "/configuracoes", icon: Settings },
+const allItems = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, group: "dash" },
+  { title: "Lançamentos", url: "/lancamentos", icon: FilePlus, group: "dash" },
+  { title: "Indicadores", url: "/indicadores", icon: BarChart3, group: "dash" },
+  { title: "Pós-venda", url: "/pos-venda", icon: PhoneCall, group: "dash" },
+  { title: "Estoque", url: "/estoque", icon: Package, group: "estoque" },
+  { title: "Fornecedores", url: "/fornecedores", icon: Truck, group: "estoque" },
+  { title: "Configurações", url: "/configuracoes", icon: Settings, group: "always" },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { signOut, user } = useAuth();
+  const { signOut, user, cargo } = useAuth();
+
+  const items = allItems.filter(item => {
+    if (item.group === "always") return true;
+    if (!cargo || cargo === "admin") return true;
+    if (cargo === "dash") return item.group === "dash";
+    if (cargo === "estoque") return item.group === "estoque";
+    return false;
+  });
 
   return (
     <Sidebar collapsible="icon">

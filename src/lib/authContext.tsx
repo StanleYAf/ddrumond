@@ -6,9 +6,12 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  cargo: string | null;
+  displayName: string | null;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -17,33 +20,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cargo, setCargo] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data } = await supabase.from("profiles").select("cargo, display_name").eq("user_id", userId).maybeSingle();
+    if (data) {
+      setCargo(data.cargo || null);
+      setDisplayName(data.display_name || null);
+    }
+  }, []);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) {
+        setTimeout(() => fetchProfile(session.user.id), 0);
+      } else {
+        setCargo(null);
+        setDisplayName(null);
+      }
       setLoading(false);
     });
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchProfile]);
+
+  const refreshProfile = useCallback(async () => {
+    if (user) await fetchProfile(user.id);
+  }, [user, fetchProfile]);
 
   const signUp = useCallback(async (email: string, password: string, displayName?: string) => {
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: displayName || email },
-        emailRedirectTo: window.location.origin,
-      },
+      email, password,
+      options: { data: { full_name: displayName || email }, emailRedirectTo: window.location.origin },
     });
     return { error: error?.message ?? null };
   }, []);
@@ -58,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, cargo, displayName, signUp, signIn, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
