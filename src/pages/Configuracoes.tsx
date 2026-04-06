@@ -1,20 +1,28 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "@/lib/dataContext";
 import { useAuth } from "@/lib/authContext";
 import { useTheme, accentMap, type AccentColor, type ThemeMode } from "@/lib/themeContext";
 import { CATEGORIA_LABELS, type Categoria, type AppData } from "@/lib/types";
 import { applyCurrencyMask, parseCurrencyMask, numberToCurrencyMask } from "@/lib/currencyMask";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Plus, Download, Upload, AlertTriangle, Sun, Moon, Check, User, Shield } from "lucide-react";
+import { Trash2, Plus, Download, Upload, AlertTriangle, Sun, Moon, Check, User, Shield, Users, Search } from "lucide-react";
 import { ListSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { toast } from "sonner";
 
 const CARGOS = [
-  { value: "dash", label: "Dash", desc: "Acesso ao dashboard, lançamentos, indicadores e pós-venda" },
-  { value: "estoque", label: "Estoque", desc: "Acesso ao estoque e fornecedores" },
-  { value: "admin", label: "Admin", desc: "Acesso completo a todas as áreas" },
+  { value: "dash", label: "Dash", desc: "Dashboard, lançamentos, indicadores e pós-venda" },
+  { value: "estoque", label: "Estoque", desc: "Estoque e fornecedores" },
+  { value: "admin", label: "Admin", desc: "Acesso completo" },
 ];
+
+interface ProfileRow {
+  id: string;
+  user_id: string;
+  display_name: string | null;
+  cargo: string | null;
+  created_at: string;
+}
 
 export default function Configuracoes() {
   const { data, setData, loading, error, undoDelete } = useAppData();
