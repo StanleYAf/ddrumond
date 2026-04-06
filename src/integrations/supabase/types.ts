@@ -277,6 +277,41 @@ export type Database = {
           },
         ]
       }
+      pendentes_estoque: {
+        Row: {
+          created_at: string
+          id: string
+          produto_id: string
+          quantidade: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          produto_id: string
+          quantidade?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          produto_id?: string
+          quantidade?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pendentes_estoque_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos_estoque"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pos_venda: {
         Row: {
           cliente: string

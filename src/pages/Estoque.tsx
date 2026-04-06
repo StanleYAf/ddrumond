@@ -52,7 +52,7 @@ interface QuickMoveState {
   documento_ref: string;
 }
 
-type TabKey = "produtos" | "movimentacoes" | "alertas";
+type TabKey = "produtos" | "movimentacoes" | "alertas" | "aguardando";
 
 const TIPO_COLORS: Record<string, string> = {
   entrada: "#30D158",
@@ -82,6 +82,8 @@ export default function Estoque() {
   const [scanForNewProduct, setScanForNewProduct] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [autoScanMode, setAutoScanMode] = useState(false);
+  const [pendentes, setPendentes] = useState<{id: string; produto_id: string; quantidade: number; created_at: string; status: string}[]>([]);
   const [editProduct, setEditProduct] = useState<Produto | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const scannerDivRef = useRef<HTMLDivElement>(null);
@@ -110,11 +112,12 @@ export default function Estoque() {
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
-    const [prodRes, movRes, fornRes, vendRes] = await Promise.all([
+    const [prodRes, movRes, fornRes, vendRes, pendRes] = await Promise.all([
       supabase.from("produtos_estoque").select("*").eq("user_id", user.id).order("nome"),
       supabase.from("movimentacoes_estoque").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("fornecedores").select("id, nome").eq("user_id", user.id).order("nome"),
       supabase.from("vendedores").select("id, nome").eq("user_id", user.id).order("nome"),
+      supabase.from("pendentes_estoque").select("*").eq("user_id", user.id).eq("status", "pendente").order("created_at", { ascending: false }),
     ]);
     if (prodRes.data) setProdutos(prodRes.data.map(d => ({
       ...d, estoque_atual: Number(d.estoque_atual), estoque_minimo: Number(d.estoque_minimo),
@@ -123,6 +126,7 @@ export default function Estoque() {
     if (movRes.data) setMovimentacoes(movRes.data.map(m => ({ ...m, quantidade: Number(m.quantidade) })));
     if (fornRes.data) setFornecedores(fornRes.data);
     if (vendRes.data) setVendedores(vendRes.data);
+    if (pendRes.data) setPendentes(pendRes.data.map(p => ({ ...p, quantidade: Number(p.quantidade) })));
     setLoading(false);
   }, [user]);
 
@@ -221,9 +225,28 @@ export default function Estoque() {
     return () => window.removeEventListener("keydown", handler);
   }, [produtos]);
 
-  function handleBarcodeScan(code: string) {
+  async function handleBarcodeScan(code: string) {
+    // Auto-scan mode: add to pending queue for later approval
+    if (autoScanMode && user) {
+      const trimmed = code.trim();
+      const found = produtos.find(p => p.codigo_barras?.trim() === trimmed);
+      if (found) {
+        const { error } = await supabase.from("pendentes_estoque").insert({
+          user_id: user.id, produto_id: found.id, quantidade: 1,
+        });
+        if (!error) {
+          toast.success(`${found.nome} → fila de aprovação`);
+          fetchAll();
+        } else {
+          toast.error("Erro ao adicionar à fila");
+        }
+      } else {
+        toast.error(`Código ${trimmed} não encontrado no estoque`);
+      }
+      return;
+    }
+
     if (scanForNewProduct) {
-      // Scanning to register a new product — pre-fill the barcode field
       setScanForNewProduct(false);
       resetForm();
       setFormCodigo(code);
@@ -235,7 +258,6 @@ export default function Estoque() {
     const found = produtos.find(p => p.codigo_barras?.trim() === trimmed);
     if (found) { setQuickMove({ produto: found, tipo: null, quantidade: 1, observacao: "", documento_ref: "" }); setSearchQuery(""); }
     else {
-      // Not found — offer to register
       resetForm();
       setFormCodigo(trimmed);
       setShowForm(true);
@@ -301,6 +323,52 @@ export default function Estoque() {
     if (updErr) { toast.error("Erro ao atualizar estoque"); setSaving(false); return; }
     toast.success(`${tipo === "entrada" ? "Entrada" : "Saída"} registrada — Novo saldo: ${novoEstoque} ${produto.unidade}`);
     setQuickMove(null); setSaving(false); fetchAll();
+  }
+
+  async function approvePendente(pend: {id: string; produto_id: string; quantidade: number}) {
+    if (!user) return;
+    const prod = produtoMap.get(pend.produto_id);
+    if (!prod) return;
+    setSaving(true);
+    const novoEstoque = Math.max(0, prod.estoque_atual - pend.quantidade);
+    await Promise.all([
+      supabase.from("movimentacoes_estoque").insert({
+        user_id: user.id, produto_id: pend.produto_id, tipo: "saida",
+        quantidade: pend.quantidade, observacao: "Baixa por bipagem",
+      }),
+      supabase.from("produtos_estoque").update({ estoque_atual: novoEstoque }).eq("id", pend.produto_id),
+      supabase.from("pendentes_estoque").delete().eq("id", pend.id),
+    ]);
+    toast.success(`Baixa: ${prod.nome} → ${novoEstoque} ${prod.unidade}`);
+    setSaving(false);
+    fetchAll();
+  }
+
+  async function rejectPendente(id: string) {
+    await supabase.from("pendentes_estoque").delete().eq("id", id);
+    toast.success("Removido da fila");
+    fetchAll();
+  }
+
+  async function approveAll() {
+    if (!user || pendentes.length === 0) return;
+    setSaving(true);
+    for (const pend of pendentes) {
+      const prod = produtoMap.get(pend.produto_id);
+      if (!prod) continue;
+      const novoEstoque = Math.max(0, prod.estoque_atual - pend.quantidade);
+      await Promise.all([
+        supabase.from("movimentacoes_estoque").insert({
+          user_id: user.id, produto_id: pend.produto_id, tipo: "saida",
+          quantidade: pend.quantidade, observacao: "Baixa por bipagem",
+        }),
+        supabase.from("produtos_estoque").update({ estoque_atual: novoEstoque }).eq("id", pend.produto_id),
+        supabase.from("pendentes_estoque").delete().eq("id", pend.id),
+      ]);
+    }
+    toast.success(`${pendentes.length} baixa(s) confirmada(s)`);
+    setSaving(false);
+    fetchAll();
   }
 
   async function handleSaveProduct(e: React.FormEvent) {
@@ -372,6 +440,7 @@ export default function Estoque() {
     { key: "produtos", label: "Produtos", badge: totalSKUs },
     { key: "movimentacoes", label: "Movimentações" },
     { key: "alertas", label: "Saúde", badge: belowMin + outOfStock.length > 0 ? belowMin + outOfStock.length : undefined },
+    { key: "aguardando", label: "Aguardando", badge: pendentes.length > 0 ? pendentes.length : undefined },
   ];
 
   return (
@@ -384,6 +453,12 @@ export default function Estoque() {
             <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold"
               style={{ background: 'rgba(255,69,58,0.15)', color: '#FF453A' }}>
               <AlertTriangle className="h-3 w-3" />{belowMin}
+            </span>
+          )}
+          {autoScanMode && (
+            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold"
+              style={{ background: 'rgba(10,132,255,0.15)', color: '#0A84FF' }}>
+              <Barcode className="h-3 w-3 animate-pulse" />Bipando
             </span>
           )}
         </div>
@@ -659,6 +734,79 @@ export default function Estoque() {
               <Package className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
               <p className="text-sm font-medium text-foreground">Estoque saudável!</p>
               <p className="text-xs text-muted-foreground">Nenhum alerta no momento</p>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ===== TAB: AGUARDANDO ===== */}
+      {activeTab === "aguardando" && (
+        <>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">Itens aguardando confirmação de baixa</p>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <span className="text-xs text-muted-foreground">Bipagem</span>
+                <button onClick={() => setAutoScanMode(!autoScanMode)}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${autoScanMode ? 'bg-primary' : 'bg-secondary'}`}>
+                  <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${autoScanMode ? 'left-[22px]' : 'left-0.5'}`} />
+                </button>
+              </label>
+              {autoScanMode && (
+                <button onClick={startCamera} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-primary text-primary-foreground">
+                  <Camera className="h-3.5 w-3.5" />Câmera
+                </button>
+              )}
+            </div>
+          </div>
+
+          {autoScanMode && (
+            <div className="p-3 rounded-xl flex items-center gap-2" style={{ background: 'rgba(10,132,255,0.1)', border: '1px solid rgba(10,132,255,0.2)' }}>
+              <Barcode className="h-4 w-4 text-primary animate-pulse" />
+              <p className="text-xs text-foreground">Modo bipagem ativo — escaneie ou bipe os produtos para adicionar à fila</p>
+            </div>
+          )}
+
+          {pendentes.length === 0 ? (
+            <div className="text-center py-12">
+              <Archive className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Nenhum item na fila</p>
+              <p className="text-xs text-muted-foreground mt-1">Ative o modo bipagem e escaneie os produtos</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="ios-list-group">
+                {pendentes.map(pend => {
+                  const prod = produtoMap.get(pend.produto_id);
+                  return (
+                    <div key={pend.id} className="ios-list-item">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground">{prod?.nome || "?"}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {new Date(pend.created_at).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          {prod?.codigo_barras && ` · ${prod.codigo_barras}`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-sm font-bold" style={{ color: '#FF453A' }}>-{pend.quantidade}</span>
+                        <button onClick={() => approvePendente(pend)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ background: '#30D158' }}>
+                          OK
+                        </button>
+                        <button onClick={() => rejectPendente(pend.id)}
+                          className="p-1.5 rounded-lg hover:bg-muted">
+                          <X className="h-3.5 w-3.5" style={{ color: '#FF453A' }} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <button onClick={approveAll} disabled={saving}
+                className="w-full h-12 rounded-xl text-base font-semibold text-white disabled:opacity-50"
+                style={{ background: '#30D158' }}>
+                {saving ? "Processando..." : `Confirmar todas as baixas (${pendentes.length})`}
+              </button>
             </div>
           )}
         </>
