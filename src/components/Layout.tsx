@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
-import { LayoutDashboard, FilePlus, BarChart3, PhoneCall, Settings, FileBarChart, Sun, Moon, Package } from "lucide-react";
+import { LayoutDashboard, FilePlus, BarChart3, PhoneCall, Settings, FileBarChart, Sun, Moon, Package, Truck } from "lucide-react";
 import { useTheme } from "@/lib/themeContext";
 
 const navItems = [
