@@ -283,50 +283,45 @@ export default function Configuracoes() {
             {usersLoading ? (
               <div className="p-6 text-center text-sm text-muted-foreground">Carregando usuários...</div>
             ) : (
-              allUsers
-                .filter(u => {
-                  if (!userSearch.trim()) return true;
-                  const q = userSearch.toLowerCase();
-                  return (u.display_name || "").toLowerCase().includes(q) || u.user_id.toLowerCase().includes(q);
-                })
-                .map(u => (
-                  <div key={u.id} className="p-4 border-b border-border/30 last:border-0 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center">
-                          <Users className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">
-                            {u.display_name || "Sem nome"}
-                            {u.user_id === user?.id && (
-                              <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-medium">Você</span>
-                            )}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground">
-                            Desde {new Date(u.created_at).toLocaleDateString("pt-BR")}
+              <>
+                {/* Pending users first */}
+                {(() => {
+                  const filtered = allUsers.filter(u => {
+                    if (!userSearch.trim()) return true;
+                    const q = userSearch.toLowerCase();
+                    return (u.display_name || "").toLowerCase().includes(q) || u.user_id.toLowerCase().includes(q);
+                  });
+                  const pending = filtered.filter(u => !u.aprovado);
+                  const approved = filtered.filter(u => u.aprovado);
+
+                  return (
+                    <>
+                      {pending.length > 0 && (
+                        <div className="px-4 pt-3 pb-1">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-warning">
+                            Pendentes ({pending.length})
                           </p>
                         </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {CARGOS.map(c => (
-                        <button
-                          key={c.value}
-                          onClick={() => updateUserCargo(u.user_id, c.value)}
-                          disabled={savingUserId === u.user_id}
-                          className="p-2 rounded-xl text-center transition disabled:opacity-50"
-                          style={{
-                            background: u.cargo === c.value ? 'hsl(var(--primary) / 0.15)' : 'hsl(var(--muted))',
-                            border: u.cargo === c.value ? '1px solid hsl(var(--primary) / 0.4)' : '1px solid transparent',
-                          }}
-                        >
-                          <p className="text-xs font-semibold" style={{ color: u.cargo === c.value ? 'hsl(var(--primary))' : undefined }}>{c.label}</p>
-                        </button>
+                      )}
+                      {pending.map(u => (
+                        <UserRow key={u.id} u={u} user={user} savingUserId={savingUserId}
+                          onApprove={approveUser} onRevoke={revokeUser} onCargo={updateUserCargo} />
                       ))}
-                    </div>
-                  </div>
-                ))
+                      {approved.length > 0 && (
+                        <div className="px-4 pt-3 pb-1">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            Aprovados ({approved.length})
+                          </p>
+                        </div>
+                      )}
+                      {approved.map(u => (
+                        <UserRow key={u.id} u={u} user={user} savingUserId={savingUserId}
+                          onApprove={approveUser} onRevoke={revokeUser} onCargo={updateUserCargo} />
+                      ))}
+                    </>
+                  );
+                })()}
+              </>
             )}
 
             <div className="p-3 text-center">
