@@ -1,20 +1,28 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppData } from "@/lib/dataContext";
 import { useAuth } from "@/lib/authContext";
 import { useTheme, accentMap, type AccentColor, type ThemeMode } from "@/lib/themeContext";
 import { CATEGORIA_LABELS, type Categoria, type AppData } from "@/lib/types";
 import { applyCurrencyMask, parseCurrencyMask, numberToCurrencyMask } from "@/lib/currencyMask";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Plus, Download, Upload, AlertTriangle, Sun, Moon, Check, User, Shield } from "lucide-react";
+import { Trash2, Plus, Download, Upload, AlertTriangle, Sun, Moon, Check, User, Shield, Users, Search } from "lucide-react";
 import { ListSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { toast } from "sonner";
 
 const CARGOS = [
-  { value: "dash", label: "Dash", desc: "Acesso ao dashboard, lançamentos, indicadores e pós-venda" },
-  { value: "estoque", label: "Estoque", desc: "Acesso ao estoque e fornecedores" },
-  { value: "admin", label: "Admin", desc: "Acesso completo a todas as áreas" },
+  { value: "dash", label: "Dash", desc: "Dashboard, lançamentos, indicadores e pós-venda" },
+  { value: "estoque", label: "Estoque", desc: "Estoque e fornecedores" },
+  { value: "admin", label: "Admin", desc: "Acesso completo" },
 ];
+
+interface ProfileRow {
+  id: string;
+  user_id: string;
+  display_name: string | null;
+  cargo: string | null;
+  created_at: string;
+}
 
 export default function Configuracoes() {
   const { data, setData, loading, error, undoDelete } = useAppData();
@@ -31,6 +39,14 @@ export default function Configuracoes() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
 
+  // Admin: user management
+  const [allUsers, setAllUsers] = useState<ProfileRow[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const [savingUserId, setSavingUserId] = useState<string | null>(null);
+
+  const isAdmin = currentCargo === "admin";
+
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
@@ -46,6 +62,32 @@ export default function Configuracoes() {
         setProfileLoading(false);
       });
   }, [user]);
+
+  const fetchAllUsers = useCallback(async () => {
+    if (!isAdmin) return;
+    setUsersLoading(true);
+    const { data, error } = await supabase.from("profiles").select("id, user_id, display_name, cargo, created_at").order("created_at", { ascending: true });
+    if (!error && data) setAllUsers(data as ProfileRow[]);
+    setUsersLoading(false);
+  }, [isAdmin]);
+
+  useEffect(() => { fetchAllUsers(); }, [fetchAllUsers]);
+
+  async function updateUserCargo(profileUserId: string, newCargo: string) {
+    setSavingUserId(profileUserId);
+    const { error } = await supabase.from("profiles").update({ cargo: newCargo || null }).eq("user_id", profileUserId);
+    if (error) {
+      toast.error("Erro ao atualizar cargo");
+    } else {
+      setAllUsers(prev => prev.map(u => u.user_id === profileUserId ? { ...u, cargo: newCargo || null } : u));
+      if (profileUserId === user?.id) {
+        setProfileCargo(newCargo);
+        await refreshProfile();
+      }
+      toast.success("Cargo atualizado");
+    }
+    setSavingUserId(null);
+  }
 
   async function saveProfile() {
     if (!user) return;
@@ -175,24 +217,14 @@ export default function Configuracoes() {
               className="text-right text-sm font-medium text-primary bg-transparent outline-none w-40"
             />
           </div>
-          <div className="ios-list-item flex-col items-start gap-3">
-            <div className="flex items-center gap-3 w-full">
+          <div className="ios-list-item">
+            <div className="flex items-center gap-3">
               <Shield className="h-4 w-4 text-primary" />
               <span className="text-sm text-foreground">Cargo</span>
             </div>
-            <div className="w-full grid grid-cols-3 gap-2">
-              {CARGOS.map(c => (
-                <button key={c.value} onClick={() => setProfileCargo(c.value)}
-                  className="p-3 rounded-xl text-center transition"
-                  style={{
-                    background: profileCargo === c.value ? 'rgba(10,132,255,0.15)' : 'rgba(255,255,255,0.05)',
-                    border: profileCargo === c.value ? '1px solid rgba(10,132,255,0.4)' : '1px solid transparent',
-                  }}>
-                  <p className="text-sm font-semibold" style={{ color: profileCargo === c.value ? '#0A84FF' : undefined }}>{c.label}</p>
-                  <p className="text-[10px] mt-0.5 text-muted-foreground">{c.desc}</p>
-                </button>
-              ))}
-            </div>
+            <span className="text-sm font-medium text-muted-foreground">
+              {CARGOS.find(c => c.value === profileCargo)?.label || "Não definido"}
+            </span>
           </div>
           <div className="p-3">
             <button onClick={saveProfile} disabled={profileSaving || profileLoading}
@@ -202,6 +234,78 @@ export default function Configuracoes() {
           </div>
         </div>
       </div>
+
+      {/* Admin: Gerenciamento de Usuários */}
+      {isAdmin && (
+        <div>
+          <p className="ios-section-title">GERENCIAMENTO DE USUÁRIOS</p>
+          <div className="ios-list-group">
+            {/* Search */}
+            <div className="ios-list-item gap-2">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <input
+                value={userSearch}
+                onChange={e => setUserSearch(e.target.value)}
+                placeholder="Buscar por nome ou email"
+                className="flex-1 text-sm bg-transparent outline-none text-foreground placeholder-muted-foreground"
+              />
+            </div>
+
+            {usersLoading ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">Carregando usuários...</div>
+            ) : (
+              allUsers
+                .filter(u => {
+                  if (!userSearch.trim()) return true;
+                  const q = userSearch.toLowerCase();
+                  return (u.display_name || "").toLowerCase().includes(q) || u.user_id.toLowerCase().includes(q);
+                })
+                .map(u => (
+                  <div key={u.id} className="p-4 border-b border-border/30 last:border-0 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center">
+                          <Users className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">
+                            {u.display_name || "Sem nome"}
+                            {u.user_id === user?.id && (
+                              <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-medium">Você</span>
+                            )}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            Desde {new Date(u.created_at).toLocaleDateString("pt-BR")}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {CARGOS.map(c => (
+                        <button
+                          key={c.value}
+                          onClick={() => updateUserCargo(u.user_id, c.value)}
+                          disabled={savingUserId === u.user_id}
+                          className="p-2 rounded-xl text-center transition disabled:opacity-50"
+                          style={{
+                            background: u.cargo === c.value ? 'hsl(var(--primary) / 0.15)' : 'hsl(var(--muted))',
+                            border: u.cargo === c.value ? '1px solid hsl(var(--primary) / 0.4)' : '1px solid transparent',
+                          }}
+                        >
+                          <p className="text-xs font-semibold" style={{ color: u.cargo === c.value ? 'hsl(var(--primary))' : undefined }}>{c.label}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))
+            )}
+
+            <div className="p-3 text-center">
+              <p className="text-[11px] text-muted-foreground">{allUsers.length} usuário(s) cadastrado(s)</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Aparência */}
       <div>
