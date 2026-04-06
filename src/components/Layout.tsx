@@ -9,6 +9,7 @@ const navItems = [
   { title: "Indicadores", url: "/indicadores", icon: BarChart3 },
   { title: "Pós-venda", url: "/pos-venda", icon: PhoneCall },
   { title: "Estoque", url: "/estoque", icon: Package },
+  { title: "Fornecedores", url: "/fornecedores", icon: Truck },
   { title: "Relatórios", url: "/relatorios", icon: FileBarChart },
   { title: "Config", url: "/configuracoes", icon: Settings },
 ];
