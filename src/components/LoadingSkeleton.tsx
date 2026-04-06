@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-function Shimmer({ className }: { className?: string }) {
-  return <Skeleton className={`bg-muted/60 ${className || ""}`} />;
+function Shimmer({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return <Skeleton className={`bg-muted/60 ${className || ""}`} style={style} />;
 }
 
 export function DashboardSkeleton() {
