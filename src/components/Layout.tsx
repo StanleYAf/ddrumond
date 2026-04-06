@@ -4,22 +4,30 @@ import { LayoutDashboard, FilePlus, BarChart3, PhoneCall, Settings, FileBarChart
 import { useTheme } from "@/lib/themeContext";
 import { useAuth } from "@/lib/authContext";
 
-const navItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Lançamentos", url: "/lancamentos", icon: FilePlus },
-  { title: "Indicadores", url: "/indicadores", icon: BarChart3 },
-  { title: "Pós-venda", url: "/pos-venda", icon: PhoneCall },
-  { title: "Estoque", url: "/estoque", icon: Package },
-  { title: "Fornecedores", url: "/fornecedores", icon: Truck },
-  { title: "Relatórios", url: "/relatorios", icon: FileBarChart },
-  { title: "Config", url: "/configuracoes", icon: Settings },
+const allNavItems = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, group: "dash" },
+  { title: "Lançamentos", url: "/lancamentos", icon: FilePlus, group: "dash" },
+  { title: "Indicadores", url: "/indicadores", icon: BarChart3, group: "dash" },
+  { title: "Pós-venda", url: "/pos-venda", icon: PhoneCall, group: "dash" },
+  { title: "Estoque", url: "/estoque", icon: Package, group: "estoque" },
+  { title: "Fornecedores", url: "/fornecedores", icon: Truck, group: "estoque" },
+  { title: "Relatórios", url: "/relatorios", icon: FileBarChart, group: "dash" },
+  { title: "Config", url: "/configuracoes", icon: Settings, group: "always" },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { mode, toggleMode } = useTheme();
-  const { signOut, user } = useAuth();
+  const { signOut, user, cargo } = useAuth();
   const isDark = mode === "dark";
+
+  const navItems = allNavItems.filter(item => {
+    if (item.group === "always") return true;
+    if (!cargo || cargo === "admin") return true;
+    if (cargo === "dash") return item.group === "dash";
+    if (cargo === "estoque") return item.group === "estoque";
+    return false;
+  });
 
   return (
     <div className="min-h-screen flex w-full bg-background">
