@@ -21,6 +21,7 @@ interface ProfileRow {
   user_id: string;
   display_name: string | null;
   cargo: string | null;
+  aprovado: boolean;
   created_at: string;
 }
 
