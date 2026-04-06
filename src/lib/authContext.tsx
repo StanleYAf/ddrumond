@@ -26,10 +26,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [aprovado, setAprovado] = useState<boolean | null>(null);
 
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data } = await supabase.from("profiles").select("cargo, display_name").eq("user_id", userId).maybeSingle();
+    const { data } = await supabase.from("profiles").select("cargo, display_name, aprovado").eq("user_id", userId).maybeSingle();
     if (data) {
       setCargo(data.cargo || null);
       setDisplayName(data.display_name || null);
+      setAprovado(data.aprovado ?? false);
+    } else {
+      setAprovado(false);
     }
   }, []);
 
