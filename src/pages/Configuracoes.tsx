@@ -25,6 +25,62 @@ interface ProfileRow {
   created_at: string;
 }
 
+function UserRow({ u, user, savingUserId, onApprove, onRevoke, onCargo }: {
+  u: ProfileRow; user: any; savingUserId: string | null;
+  onApprove: (id: string) => void; onRevoke: (id: string) => void; onCargo: (id: string, cargo: string) => void;
+}) {
+  return (
+    <div className="p-4 border-b border-border/30 last:border-0 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`w-9 h-9 rounded-full flex items-center justify-center ${u.aprovado ? 'bg-primary/15' : 'bg-warning/15'}`}>
+            {u.aprovado ? <Users className="h-4 w-4 text-primary" /> : <Clock className="h-4 w-4 text-warning" />}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              {u.display_name || "Sem nome"}
+              {u.user_id === user?.id && (
+                <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-medium">Você</span>
+              )}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              Desde {new Date(u.created_at).toLocaleDateString("pt-BR")}
+            </p>
+          </div>
+        </div>
+        {/* Approve / Revoke button */}
+        {u.aprovado ? (
+          <button onClick={() => onRevoke(u.user_id)} disabled={savingUserId === u.user_id || u.user_id === user?.id}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium bg-destructive/10 text-destructive disabled:opacity-30 transition">
+            Revogar
+          </button>
+        ) : (
+          <button onClick={() => onApprove(u.user_id)} disabled={savingUserId === u.user_id}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-500/15 text-emerald-600 disabled:opacity-50 transition">
+            <CheckCircle className="h-3.5 w-3.5" /> Aprovar
+          </button>
+        )}
+      </div>
+      {/* Cargo buttons - only show for approved users */}
+      {u.aprovado && (
+        <div className="grid grid-cols-3 gap-2">
+          {CARGOS.map(c => (
+            <button key={c.value} onClick={() => onCargo(u.user_id, c.value)}
+              disabled={savingUserId === u.user_id}
+              className="p-2 rounded-xl text-center transition disabled:opacity-50"
+              style={{
+                background: u.cargo === c.value ? 'hsl(var(--primary) / 0.15)' : 'hsl(var(--muted))',
+                border: u.cargo === c.value ? '1px solid hsl(var(--primary) / 0.4)' : '1px solid transparent',
+              }}>
+              <p className="text-xs font-semibold" style={{ color: u.cargo === c.value ? 'hsl(var(--primary))' : undefined }}>{c.label}</p>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Configuracoes() {
   const { data, setData, loading, error, undoDelete } = useAppData();
   const { user, refreshProfile, cargo: currentCargo, displayName: currentDisplayName } = useAuth();
