@@ -90,6 +90,34 @@ export default function Configuracoes() {
     setSavingUserId(null);
   }
 
+  async function approveUser(profileUserId: string) {
+    setSavingUserId(profileUserId);
+    const { error } = await supabase.from("profiles").update({ aprovado: true }).eq("user_id", profileUserId);
+    if (error) {
+      toast.error("Erro ao aprovar usuário");
+    } else {
+      setAllUsers(prev => prev.map(u => u.user_id === profileUserId ? { ...u, aprovado: true } : u));
+      toast.success("Usuário aprovado");
+    }
+    setSavingUserId(null);
+  }
+
+  async function revokeUser(profileUserId: string) {
+    if (profileUserId === user?.id) {
+      toast.error("Você não pode revogar seu próprio acesso");
+      return;
+    }
+    setSavingUserId(profileUserId);
+    const { error } = await supabase.from("profiles").update({ aprovado: false }).eq("user_id", profileUserId);
+    if (error) {
+      toast.error("Erro ao revogar acesso");
+    } else {
+      setAllUsers(prev => prev.map(u => u.user_id === profileUserId ? { ...u, aprovado: false } : u));
+      toast.success("Acesso revogado");
+    }
+    setSavingUserId(null);
+  }
+
   async function saveProfile() {
     if (!user) return;
     setProfileSaving(true);
