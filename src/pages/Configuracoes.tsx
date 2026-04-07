@@ -230,7 +230,9 @@ export default function Configuracoes() {
 
   function addVendedor() {
     if (!novoVendedor.trim()) return;
-    setData((prev) => ({ ...prev, vendedores: [...prev.vendedores, novoVendedor.trim()] }));
+    const nome = novoVendedor.trim();
+    setData((prev) => ({ ...prev, vendedores: [...prev.vendedores, nome] }));
+    setVendedoresStatus(prev => [...prev, { nome, ativo: true }]);
     setNovoVendedor("");
     toast.success("Vendedor adicionado");
   }
