@@ -134,7 +134,7 @@ export default function Configuracoes() {
   // Load vendedores with ativo status
   useEffect(() => {
     if (!user || !isAdmin) return;
-    supabase.from("vendedores").select("nome, ativo").eq("user_id", user.id).order("nome")
+    supabase.from("vendedores").select("nome, ativo").order("nome")
       .then(({ data: vData }) => {
         if (vData) setVendedoresStatus(vData.map(v => ({ nome: v.nome, ativo: v.ativo ?? true })));
       });

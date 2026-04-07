@@ -86,7 +86,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     supabase.from("produtos_estoque").select("nome, estoque_atual, estoque_minimo, ativo")
-      .eq("user_id", user.id).eq("ativo", true).then(({ data: prods }) => {
+      .eq("ativo", true).then(({ data: prods }) => {
         if (!prods) return;
         const alerts: Alert[] = [];
         const zerado = prods.filter(p => Number(p.estoque_atual) === 0);
