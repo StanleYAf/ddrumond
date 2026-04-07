@@ -197,7 +197,25 @@ export default function Configuracoes() {
     setSavingUserId(null);
   }
 
-  async function saveProfile() {
+  async function rejectUser(profileUserId: string) {
+    if (profileUserId === user?.id) return;
+    setSavingUserId(profileUserId);
+    try {
+      const res = await supabase.functions.invoke("delete-user", {
+        body: { target_user_id: profileUserId },
+      });
+      if (res.error) {
+        toast.error("Erro ao negar conta");
+      } else {
+        setAllUsers(prev => prev.filter(u => u.user_id !== profileUserId));
+        toast.success("Solicitação negada e conta removida");
+      }
+    } catch {
+      toast.error("Erro ao negar conta");
+    }
+    setSavingUserId(null);
+  }
+
     if (!user) return;
     setProfileSaving(true);
     const { error } = await supabase.from("profiles").update({
