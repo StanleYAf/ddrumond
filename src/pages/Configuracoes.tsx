@@ -225,11 +225,17 @@ export default function Configuracoes() {
     toast.success("Vendedor adicionado");
   }
 
-  function removeVendedor(name: string) {
-    setData((prev) => ({ ...prev, vendedores: prev.vendedores.filter((v) => v !== name) }));
-    undoDelete(name, `Vendedor "${name}" removido.`, (prev) => ({
-      ...prev, vendedores: [...prev.vendedores, name],
-    }));
+  async function toggleVendedor(name: string, ativo: boolean) {
+    if (!user) return;
+    const { error } = await supabase.from("vendedores").update({ ativo }).eq("user_id", user.id).eq("nome", name);
+    if (error) { toast.error("Erro ao atualizar vendedor"); return; }
+    if (!ativo) {
+      setData((prev) => ({ ...prev, vendedores: prev.vendedores.filter((v) => v !== name) }));
+    } else {
+      setData((prev) => ({ ...prev, vendedores: [...prev.vendedores, name] }));
+    }
+    setVendedoresStatus(prev => prev.map(v => v.nome === name ? { ...v, ativo } : v));
+    toast.success(ativo ? "Vendedor ativado" : "Vendedor desativado");
   }
 
   function handleExport() {
