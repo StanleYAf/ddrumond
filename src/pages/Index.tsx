@@ -161,24 +161,7 @@ export default function Dashboard() {
     return { pct, positive: pct >= 0 };
   }
 
-  // Projections
   const isCurrentMonth = currentMonth === now.getMonth() && currentYear === now.getFullYear();
-  const totalDays = daysInMonth(currentMonth, currentYear);
-  const elapsed = isCurrentMonth ? dayOfMonth(now) : totalDays;
-
-  const projections = useMemo(() => {
-    const cats = ["produto", "servico", "contrato", "acessorio"] as Categoria[];
-    return cats.map(cat => {
-      const atual = totals[cat];
-      const proj = elapsed > 0 ? (atual / elapsed) * totalDays : 0;
-      const meta = currentMetas[cat];
-      const pctProj = meta > 0 ? (proj / meta) * 100 : 0;
-      return { cat, atual, proj, meta, pctProj };
-    });
-  }, [totals, elapsed, totalDays, currentMetas]);
-
-  const totalProj = projections.reduce((s, p) => s + p.proj, 0);
-  const pctTotalProj = metaTotal > 0 ? (totalProj / metaTotal) * 100 : 0;
 
   // Smart Alerts
   const alerts = useMemo(() => {
