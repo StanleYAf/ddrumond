@@ -143,9 +143,10 @@ export default function Lancamentos() {
 
   const allEntries = useMemo(() => {
     const entries: (Lancamento & { cat: Categoria })[] = [];
-    (["produto", "servico", "contrato", "acessorio"] as Categoria[]).forEach((cat) => {
+    const catsToShow = categoria === "todos" ? (["produto", "servico", "contrato", "acessorio"] as Categoria[]) : [categoria as Categoria];
+    catsToShow.forEach((cat) => {
       data.lancamentos[CATEGORIA_ARRAY[cat]]
-        .filter((l) => { const d = new Date(l.data); return d.getMonth() === filterMonth && d.getFullYear() === filterYear; })
+        .filter((l) => { const [y, m] = l.data.split("-").map(Number); return (m - 1) === filterMonth && y === filterYear; })
         .forEach((l) => entries.push({ ...l, cat }));
     });
     const q = searchQuery.toLowerCase().trim();
