@@ -29,15 +29,20 @@ function filterByVendedor(items: Lancamento[], vendedor: string | null) {
   return items.filter(i => i.vendedor === vendedor);
 }
 
+function parseLocalDate(dateStr: string) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return { month: m - 1, year: y };
+}
+
 function sumByMonth(items: Lancamento[], month: number, year: number, vendedor: string | null = null) {
   return filterByVendedor(items, vendedor)
-    .filter((i) => { const d = new Date(i.data); return d.getMonth() === month && d.getFullYear() === year; })
+    .filter((i) => { const d = parseLocalDate(i.data); return d.month === month && d.year === year; })
     .reduce((s, i) => s + i.valor, 0);
 }
 
 function itemsByMonth(items: Lancamento[], month: number, year: number, vendedor: string | null = null) {
   return filterByVendedor(items, vendedor)
-    .filter((i) => { const d = new Date(i.data); return d.getMonth() === month && d.getFullYear() === year; });
+    .filter((i) => { const d = parseLocalDate(i.data); return d.month === month && d.year === year; });
 }
 
 interface Alert {
