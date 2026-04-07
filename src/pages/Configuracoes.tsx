@@ -5,7 +5,7 @@ import { useTheme, accentMap, type AccentColor, type ThemeMode } from "@/lib/the
 import { CATEGORIA_LABELS, type Categoria, type AppData } from "@/lib/types";
 import { applyCurrencyMask, parseCurrencyMask, numberToCurrencyMask } from "@/lib/currencyMask";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Plus, Download, Upload, AlertTriangle, Sun, Moon, Check, User, Shield, Users, Search, Clock, CheckCircle } from "lucide-react";
+import { Trash2, Plus, Download, Upload, AlertTriangle, Sun, Moon, Check, User, Shield, Users, Search, Clock, CheckCircle, XCircle } from "lucide-react";
 import { ConfigSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { toast } from "sonner";
@@ -25,9 +25,9 @@ interface ProfileRow {
   created_at: string;
 }
 
-function UserRow({ u, user, savingUserId, onApprove, onRevoke, onCargo }: {
+function UserRow({ u, user, savingUserId, onApprove, onRevoke, onReject, onCargo }: {
   u: ProfileRow; user: any; savingUserId: string | null;
-  onApprove: (id: string) => void; onRevoke: (id: string) => void; onCargo: (id: string, cargo: string) => void;
+  onApprove: (id: string) => void; onRevoke: (id: string) => void; onReject: (id: string) => void; onCargo: (id: string, cargo: string) => void;
 }) {
   return (
     <div className="p-4 border-b border-border/30 last:border-0 space-y-3">
@@ -55,10 +55,16 @@ function UserRow({ u, user, savingUserId, onApprove, onRevoke, onCargo }: {
             Revogar
           </button>
         ) : (
-          <button onClick={() => onApprove(u.user_id)} disabled={savingUserId === u.user_id}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-500/15 text-emerald-600 disabled:opacity-50 transition">
-            <CheckCircle className="h-3.5 w-3.5" /> Aprovar
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => onReject(u.user_id)} disabled={savingUserId === u.user_id}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium bg-destructive/10 text-destructive disabled:opacity-50 transition">
+              <XCircle className="h-3.5 w-3.5" /> Negar
+            </button>
+            <button onClick={() => onApprove(u.user_id)} disabled={savingUserId === u.user_id}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-500/15 text-emerald-600 disabled:opacity-50 transition">
+              <CheckCircle className="h-3.5 w-3.5" /> Aprovar
+            </button>
+          </div>
         )}
       </div>
       {/* Cargo buttons - only show for approved users */}
