@@ -163,7 +163,7 @@ export default function Lancamentos() {
       return sortAsc ? cmp : -cmp;
     });
     return searched;
-  }, [data, filterMonth, filterYear, searchQuery, sortKey, sortAsc]);
+  }, [data, filterMonth, filterYear, categoria, searchQuery, sortKey, sortAsc]);
 
   const totalPages = Math.max(1, Math.ceil(allEntries.length / ITEMS_PER_PAGE));
   const currentPage = Math.min(page, totalPages - 1);
