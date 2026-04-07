@@ -86,7 +86,7 @@ export async function loadFromSupabase(userId: string): Promise<AppData> {
     },
   }));
 
-  const vendedores = (vendRes.data ?? []).filter((v: any) => v.ativo !== false).map((v) => v.nome);
+  const vendedores = [...new Set((vendRes.data ?? []).filter((v: any) => v.ativo !== false).map((v) => v.nome))];
 
   // Use defaults for current metas (from historico or INITIAL_DATA)
   const now = new Date();
