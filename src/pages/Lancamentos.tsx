@@ -250,6 +250,15 @@ export default function Lancamentos() {
 
       {/* Category Pills */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 no-scrollbar">
+        <button onClick={() => setCategoria("todos")}
+          className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all"
+          style={{
+            background: categoria === "todos" ? 'hsl(var(--primary) / 0.2)' : 'hsl(var(--muted))',
+            color: categoria === "todos" ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
+            border: `1px solid ${categoria === "todos" ? 'hsl(var(--primary) / 0.4)' : 'transparent'}`,
+          }}>
+          Todos
+        </button>
         {(["produto", "servico", "contrato", "acessorio"] as Categoria[]).map(cat => (
           <button key={cat} onClick={() => setCategoria(cat)}
             className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all"
