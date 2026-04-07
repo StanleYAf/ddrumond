@@ -409,6 +409,14 @@ export default function Estoque() {
     setShowForm(true);
   }
 
+  async function handleDeleteProduct(p: Produto) {
+    if (!confirm(`Tem certeza que deseja excluir "${p.nome}"? Esta ação não pode ser desfeita.`)) return;
+    const { error } = await supabase.from("produtos_estoque").delete().eq("id", p.id);
+    if (error) { toast.error("Erro ao excluir produto"); return; }
+    setProdutos(prev => prev.filter(x => x.id !== p.id));
+    toast.success("Produto excluído");
+  }
+
   function exportMovCSV() {
     const rows = filteredMov.map(m => {
       const p = produtoMap.get(m.produto_id);
