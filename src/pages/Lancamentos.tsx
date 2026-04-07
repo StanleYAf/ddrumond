@@ -31,7 +31,7 @@ export default function Lancamentos() {
 
   const filterMonth = isNaN(mesParam) || mesParam < 0 || mesParam > 11 ? now.getMonth() : mesParam;
   const filterYear = isNaN(anoParam) ? now.getFullYear() : anoParam;
-  const categoria: Categoria = catParam && ["produto", "servico", "contrato", "acessorio"].includes(catParam) ? catParam as Categoria : "produto";
+  const categoria: Categoria | "todos" = catParam && ["produto", "servico", "contrato", "acessorio"].includes(catParam) ? catParam as Categoria : "todos";
 
   function setFilterMonth(m: number) {
     setSearchParams(prev => { prev.set("mes", String(m + 1)); return prev; }, { replace: true });
@@ -39,8 +39,12 @@ export default function Lancamentos() {
   function setFilterYear(y: number) {
     setSearchParams(prev => { prev.set("ano", String(y)); return prev; }, { replace: true });
   }
-  function setCategoria(c: Categoria) {
-    setSearchParams(prev => { prev.set("categoria", c); return prev; }, { replace: true });
+  function setCategoria(c: Categoria | "todos") {
+    setSearchParams(prev => {
+      if (c === "todos") prev.delete("categoria");
+      else prev.set("categoria", c);
+      return prev;
+    }, { replace: true });
   }
 
   const [showForm, setShowForm] = useState(false);
