@@ -170,10 +170,10 @@ export default function Lancamentos() {
 
   const totalMes = allEntries.reduce((s, e) => s + e.valor, 0);
   const { metas: currentMetas } = getMetasForMonth(data.historico_metas, filterMonth, filterYear, data.metas, data.meta_semanal);
-  const metaCategoria = currentMetas[categoria];
-  const totalCategoria = data.lancamentos[CATEGORIA_ARRAY[categoria]]
-    .filter((l) => { const d = new Date(l.data); return d.getMonth() === filterMonth && d.getFullYear() === filterYear; })
-    .reduce((s, l) => s + l.valor, 0);
+  const metaCategoria = categoria === "todos"
+    ? Object.values(currentMetas).reduce((a, b) => a + b, 0)
+    : currentMetas[categoria as Categoria];
+  const totalCategoria = totalMes;
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortAsc(!sortAsc);
