@@ -86,7 +86,7 @@ export async function loadFromSupabase(userId: string): Promise<AppData> {
     },
   }));
 
-  const vendedores = (vendRes.data ?? []).map((v) => v.nome);
+  const vendedores = (vendRes.data ?? []).filter((v: any) => v.ativo !== false).map((v) => v.nome);
 
   // Use defaults for current metas (from historico or INITIAL_DATA)
   const now = new Date();
@@ -268,15 +268,10 @@ export async function syncToSupabase(userId: string, oldData: AppData, newData: 
     }
   }
 
-  // Sync vendedores
+  // Sync vendedores (only add new ones, don't delete — use ativo toggle instead)
   const oldVendSet = new Set(oldData.vendedores);
-  const newVendSet = new Set(newData.vendedores);
   const addedVend = newData.vendedores.filter((v) => !oldVendSet.has(v));
-  const removedVend = oldData.vendedores.filter((v) => !newVendSet.has(v));
 
-  if (removedVend.length > 0) {
-    promises.push(supabase.from("vendedores").delete().eq("user_id", userId).in("nome", removedVend).then());
-  }
   if (addedVend.length > 0) {
     promises.push(supabase.from("vendedores").insert(addedVend.map((nome) => ({ user_id: userId, nome }))).then());
   }

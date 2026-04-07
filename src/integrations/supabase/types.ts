@@ -445,18 +445,21 @@ export type Database = {
       }
       vendedores: {
         Row: {
+          ativo: boolean
           created_at: string
           id: string
           nome: string
           user_id: string
         }
         Insert: {
+          ativo?: boolean
           created_at?: string
           id?: string
           nome: string
           user_id: string
         }
         Update: {
+          ativo?: boolean
           created_at?: string
           id?: string
           nome?: string

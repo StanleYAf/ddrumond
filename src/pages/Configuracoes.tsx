@@ -86,6 +86,7 @@ export default function Configuracoes() {
   const { user, refreshProfile, cargo: currentCargo, displayName: currentDisplayName } = useAuth();
   const { mode, accent, setMode, setAccent, toggleMode } = useTheme();
   const [novoVendedor, setNovoVendedor] = useState("");
+  const [vendedoresStatus, setVendedoresStatus] = useState<{nome: string; ativo: boolean}[]>([]);
   const [showImportConfirm, setShowImportConfirm] = useState(false);
   const [pendingImport, setPendingImport] = useState<AppData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -129,6 +130,15 @@ export default function Configuracoes() {
   }, [isAdmin]);
 
   useEffect(() => { fetchAllUsers(); }, [fetchAllUsers]);
+
+  // Load vendedores with ativo status
+  useEffect(() => {
+    if (!user || !isAdmin) return;
+    supabase.from("vendedores").select("nome, ativo").eq("user_id", user.id).order("nome")
+      .then(({ data: vData }) => {
+        if (vData) setVendedoresStatus(vData.map(v => ({ nome: v.nome, ativo: v.ativo ?? true })));
+      });
+  }, [user, isAdmin]);
 
   async function updateUserCargo(profileUserId: string, newCargo: string) {
     setSavingUserId(profileUserId);
@@ -220,16 +230,24 @@ export default function Configuracoes() {
 
   function addVendedor() {
     if (!novoVendedor.trim()) return;
-    setData((prev) => ({ ...prev, vendedores: [...prev.vendedores, novoVendedor.trim()] }));
+    const nome = novoVendedor.trim();
+    setData((prev) => ({ ...prev, vendedores: [...prev.vendedores, nome] }));
+    setVendedoresStatus(prev => [...prev, { nome, ativo: true }]);
     setNovoVendedor("");
     toast.success("Vendedor adicionado");
   }
 
-  function removeVendedor(name: string) {
-    setData((prev) => ({ ...prev, vendedores: prev.vendedores.filter((v) => v !== name) }));
-    undoDelete(name, `Vendedor "${name}" removido.`, (prev) => ({
-      ...prev, vendedores: [...prev.vendedores, name],
-    }));
+  async function toggleVendedor(name: string, ativo: boolean) {
+    if (!user) return;
+    const { error } = await supabase.from("vendedores").update({ ativo }).eq("user_id", user.id).eq("nome", name);
+    if (error) { toast.error("Erro ao atualizar vendedor"); return; }
+    if (!ativo) {
+      setData((prev) => ({ ...prev, vendedores: prev.vendedores.filter((v) => v !== name) }));
+    } else {
+      setData((prev) => ({ ...prev, vendedores: [...prev.vendedores, name] }));
+    }
+    setVendedoresStatus(prev => prev.map(v => v.nome === name ? { ...v, ativo } : v));
+    toast.success(ativo ? "Vendedor ativado" : "Vendedor desativado");
   }
 
   function handleExport() {
@@ -463,11 +481,15 @@ export default function Configuracoes() {
       <div>
         <p className="ios-section-title">VENDEDORES</p>
         <div className="ios-list-group">
-          {data.vendedores.map((v) => (
-            <div key={v} className="ios-list-item">
-              <span className="text-sm text-foreground">{v}</span>
-              <button onClick={() => removeVendedor(v)} className="p-1 rounded-full bg-destructive/15">
-                <Trash2 className="h-4 w-4 text-destructive" />
+          {vendedoresStatus.map((v) => (
+            <div key={v.nome} className="ios-list-item">
+              <div className="flex items-center gap-2">
+                <span className={`text-sm ${v.ativo ? 'text-foreground' : 'text-muted-foreground line-through'}`}>{v.nome}</span>
+                {!v.ativo && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Inativo</span>}
+              </div>
+              <button onClick={() => toggleVendedor(v.nome, !v.ativo)}
+                className={`relative w-10 h-6 rounded-full transition-colors ${v.ativo ? 'bg-primary' : 'bg-muted'}`}>
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${v.ativo ? 'translate-x-4' : ''}`} />
               </button>
             </div>
           ))}
