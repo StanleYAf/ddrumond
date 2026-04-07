@@ -3,7 +3,7 @@ import { useAppData } from "@/lib/dataContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/authContext";
 import { useSearchParams } from "react-router-dom";
-import { CATEGORIA_LABELS, MESES, formatCurrency, daysInMonth, dayOfMonth, getMetasForMonth, type Categoria, type Lancamento } from "@/lib/types";
+import { CATEGORIA_LABELS, MESES, formatCurrency, getMetasForMonth, type Categoria, type Lancamento } from "@/lib/types";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Package, Wrench, FileText, Puzzle, TrendingUp, ChevronDown, Bell, X, AlertTriangle, Clock, Target, GitCompare, Users, Trophy, Hash, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
