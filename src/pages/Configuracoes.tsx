@@ -216,6 +216,7 @@ export default function Configuracoes() {
     setSavingUserId(null);
   }
 
+  async function saveProfile() {
     if (!user) return;
     setProfileSaving(true);
     const { error } = await supabase.from("profiles").update({
@@ -410,7 +411,7 @@ export default function Configuracoes() {
                       )}
                       {pending.map(u => (
                         <UserRow key={u.id} u={u} user={user} savingUserId={savingUserId}
-                          onApprove={approveUser} onRevoke={revokeUser} onCargo={updateUserCargo} />
+                          onApprove={approveUser} onRevoke={revokeUser} onReject={rejectUser} onCargo={updateUserCargo} />
                       ))}
                       {approved.length > 0 && (
                         <div className="px-4 pt-3 pb-1">
