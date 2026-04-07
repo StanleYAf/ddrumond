@@ -11,12 +11,12 @@ const CATEGORIA_MAP: Record<string, keyof AppData["lancamentos"]> = {
 
 export async function loadFromSupabase(userId: string): Promise<AppData> {
   const [lancRes, indRes, pvRes, notasRes, metasRes, vendRes] = await Promise.all([
-    supabase.from("lancamentos").select("*").eq("user_id", userId),
-    supabase.from("indicadores_semanais").select("*").eq("user_id", userId),
-    supabase.from("pos_venda").select("*").eq("user_id", userId),
-    supabase.from("notas_contato").select("*").eq("user_id", userId),
-    supabase.from("metas_historicas").select("*").eq("user_id", userId),
-    supabase.from("vendedores").select("*").eq("user_id", userId),
+    supabase.from("lancamentos").select("*"),
+    supabase.from("indicadores_semanais").select("*"),
+    supabase.from("pos_venda").select("*"),
+    supabase.from("notas_contato").select("*"),
+    supabase.from("metas_historicas").select("*"),
+    supabase.from("vendedores").select("*"),
   ]);
 
   // Build lancamentos by category
