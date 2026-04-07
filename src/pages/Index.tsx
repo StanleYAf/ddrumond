@@ -203,7 +203,7 @@ export default function Dashboard() {
     }
     list.push(...stockAlerts);
     return list;
-  }, [data, totals, isCurrentMonth, elapsed, now, currentMetas, stockAlerts]);
+  }, [data, totals, isCurrentMonth, now, currentMetas, stockAlerts]);
 
   // Client Ranking
   const clientRanking = useMemo(() => {
