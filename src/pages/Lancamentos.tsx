@@ -67,7 +67,8 @@ export default function Lancamentos() {
   const [editData, setEditData] = useState("");
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
-  const fieldLabel = categoria === "acessorio" ? "Item" : categoria === "produto" ? "Produto" : "Serviço";
+  const formCat = categoria === "todos" ? "produto" : categoria as Categoria;
+  const fieldLabel = formCat === "acessorio" ? "Item" : formCat === "produto" ? "Produto" : "Serviço";
 
   function validateForm(c: string, d: string, v: string, dt: string) {
     const result = lancamentoSchema.safeParse({ cliente: c, descricao: d, valor: parseFloat(v) || 0, data: dt });
