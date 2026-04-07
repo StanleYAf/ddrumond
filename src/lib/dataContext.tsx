@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 import { AppData } from "./types";
 import { INITIAL_DATA } from "./initialData";
 import { loadFromSupabase, syncToSupabase } from "./supabaseSync";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./authContext";
 import { toast } from "sonner";
 
