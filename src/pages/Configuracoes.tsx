@@ -131,6 +131,15 @@ export default function Configuracoes() {
 
   useEffect(() => { fetchAllUsers(); }, [fetchAllUsers]);
 
+  // Load vendedores with ativo status
+  useEffect(() => {
+    if (!user || !isAdmin) return;
+    supabase.from("vendedores").select("nome, ativo").eq("user_id", user.id).order("nome")
+      .then(({ data: vData }) => {
+        if (vData) setVendedoresStatus(vData.map(v => ({ nome: v.nome, ativo: v.ativo ?? true })));
+      });
+  }, [user, isAdmin]);
+
   async function updateUserCargo(profileUserId: string, newCargo: string) {
     setSavingUserId(profileUserId);
     const { error } = await supabase.from("profiles").update({ cargo: newCargo || null }).eq("user_id", profileUserId);
