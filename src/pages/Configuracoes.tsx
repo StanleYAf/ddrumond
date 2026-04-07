@@ -136,7 +136,14 @@ export default function Configuracoes() {
     if (!user || !isAdmin) return;
     supabase.from("vendedores").select("nome, ativo").order("nome")
       .then(({ data: vData }) => {
-        if (vData) setVendedoresStatus(vData.map(v => ({ nome: v.nome, ativo: v.ativo ?? true })));
+        if (vData) {
+          const unique = new Map<string, boolean>();
+          vData.forEach(v => {
+            const existing = unique.get(v.nome);
+            if (existing === undefined || v.ativo) unique.set(v.nome, v.ativo ?? true);
+          });
+          setVendedoresStatus(Array.from(unique.entries()).map(([nome, ativo]) => ({ nome, ativo })));
+        }
       });
   }, [user, isAdmin]);
 
