@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
 import {
   Package, Search, Camera, Plus, Pencil, ArrowDownToLine, ArrowUpFromLine,
   X, AlertTriangle, Barcode, Download, RotateCcw, Archive, TrendingUp,
-  Clock, Eye,
+  Clock, Eye, Trash2,
 } from "lucide-react";
 import { ListSkeleton } from "@/components/LoadingSkeleton";
 
