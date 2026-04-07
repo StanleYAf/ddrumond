@@ -42,12 +42,12 @@ export default function Fornecedores() {
   const fetchFornecedores = useCallback(async () => {
     if (!user) return;
     const { data: fornData, error } = await supabase
-      .from("fornecedores").select("*").eq("user_id", user.id).order("nome");
+      .from("fornecedores").select("*").order("nome");
     if (error) { toast.error("Erro ao carregar fornecedores"); return; }
 
     // Count products per fornecedor
     const { data: prodData } = await supabase
-      .from("produtos_estoque").select("fornecedor_id").eq("user_id", user.id);
+      .from("produtos_estoque").select("fornecedor_id");
     const countMap = new Map<string, number>();
     (prodData || []).forEach(p => {
       if (p.fornecedor_id) countMap.set(p.fornecedor_id, (countMap.get(p.fornecedor_id) || 0) + 1);

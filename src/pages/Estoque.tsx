@@ -113,11 +113,11 @@ export default function Estoque() {
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const [prodRes, movRes, fornRes, vendRes, pendRes] = await Promise.all([
-      supabase.from("produtos_estoque").select("*").eq("user_id", user.id).order("nome"),
-      supabase.from("movimentacoes_estoque").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("fornecedores").select("id, nome").eq("user_id", user.id).order("nome"),
-      supabase.from("vendedores").select("id, nome").eq("user_id", user.id).order("nome"),
-      supabase.from("pendentes_estoque").select("*").eq("user_id", user.id).eq("status", "pendente").order("created_at", { ascending: false }),
+      supabase.from("produtos_estoque").select("*").order("nome"),
+      supabase.from("movimentacoes_estoque").select("*").order("created_at", { ascending: false }),
+      supabase.from("fornecedores").select("id, nome").order("nome"),
+      supabase.from("vendedores").select("id, nome").order("nome"),
+      supabase.from("pendentes_estoque").select("*").eq("status", "pendente").order("created_at", { ascending: false }),
     ]);
     if (prodRes.data) setProdutos(prodRes.data.map(d => ({
       ...d, estoque_atual: Number(d.estoque_atual), estoque_minimo: Number(d.estoque_minimo),
