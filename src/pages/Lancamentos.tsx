@@ -87,11 +87,11 @@ export default function Lancamentos() {
     setFormErrors({});
     const newItem: Lancamento = {
       id: crypto.randomUUID(), cliente: cliente.trim(), valor: parseCurrencyMask(valor), data: dataLanc,
-      [CATEGORIA_FIELD[categoria]]: descricao.trim(),
+      [CATEGORIA_FIELD[formCat]]: descricao.trim(),
     };
     setData((prev) => ({
       ...prev,
-      lancamentos: { ...prev.lancamentos, [CATEGORIA_ARRAY[categoria]]: [...prev.lancamentos[CATEGORIA_ARRAY[categoria]], newItem] },
+      lancamentos: { ...prev.lancamentos, [CATEGORIA_ARRAY[formCat]]: [...prev.lancamentos[CATEGORIA_ARRAY[formCat]], newItem] },
     }));
     setCliente(""); setDescricao(""); setValor(""); setShowForm(false);
     toast.success("Lançamento adicionado com sucesso");
@@ -280,7 +280,7 @@ export default function Lancamentos() {
           <p className="text-lg font-bold text-foreground">{formatCurrency(totalMes)}</p>
         </div>
         <div>
-          <p className="text-[11px] font-medium text-muted-foreground">{CATEGORIA_LABELS[categoria]}</p>
+          <p className="text-[11px] font-medium text-muted-foreground">{categoria === "todos" ? "Total" : CATEGORIA_LABELS[categoria as Categoria]}</p>
           <p className="text-lg font-bold text-foreground">{formatCurrency(totalCategoria)}</p>
         </div>
         <div>
