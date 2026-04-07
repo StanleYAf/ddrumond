@@ -422,7 +422,7 @@ export default function Configuracoes() {
                       )}
                       {approved.map(u => (
                         <UserRow key={u.id} u={u} user={user} savingUserId={savingUserId}
-                          onApprove={approveUser} onRevoke={revokeUser} onCargo={updateUserCargo} />
+                          onApprove={approveUser} onRevoke={revokeUser} onReject={rejectUser} onCargo={updateUserCargo} />
                       ))}
                     </>
                   );
