@@ -38,22 +38,38 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const dataRef = useRef(data);
   dataRef.current = data;
 
+  const loadData = useCallback(async () => {
+    if (!user) return;
+    try {
+      const loaded = await loadFromSupabase(user.id);
+      if (!loaded.historico_metas) loaded.historico_metas = [];
+      setDataRaw(loaded);
+      setLoading(false);
+    } catch (err) {
+      console.error("[DataProvider] Falha ao carregar dados:", err);
+      setError("Não foi possível carregar os dados. Usando dados padrão.");
+      toast.error("Erro ao carregar dados do servidor");
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  // Realtime: reload when any table changes
   useEffect(() => {
     if (!user) return;
-    
-    loadFromSupabase(user.id)
-      .then((loaded) => {
-        if (!loaded.historico_metas) loaded.historico_metas = [];
-        setDataRaw(loaded);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("[DataProvider] Falha ao carregar dados:", err);
-        setError("Não foi possível carregar os dados. Usando dados padrão.");
-        toast.error("Erro ao carregar dados do servidor");
-        setLoading(false);
-      });
-  }, [user]);
+    const channel = supabase
+      .channel('realtime-all')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lancamentos' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'indicadores_semanais' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pos_venda' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vendedores' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'metas_historicas' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notas_contato' }, () => loadData())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user, loadData]);
 
   const setData = useCallback((fn: (prev: AppData) => AppData) => {
     setDataRaw((prev) => {
