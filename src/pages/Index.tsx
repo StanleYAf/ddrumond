@@ -3,7 +3,7 @@ import { useAppData } from "@/lib/dataContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/authContext";
 import { useSearchParams } from "react-router-dom";
-import { CATEGORIA_LABELS, MESES, formatCurrency, daysInMonth, dayOfMonth, getMetasForMonth, type Categoria, type Lancamento } from "@/lib/types";
+import { CATEGORIA_LABELS, MESES, formatCurrency, getMetasForMonth, type Categoria, type Lancamento } from "@/lib/types";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Package, Wrench, FileText, Puzzle, TrendingUp, ChevronDown, Bell, X, AlertTriangle, Clock, Target, GitCompare, Users, Trophy, Hash, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -29,15 +29,20 @@ function filterByVendedor(items: Lancamento[], vendedor: string | null) {
   return items.filter(i => i.vendedor === vendedor);
 }
 
+function parseLocalDate(dateStr: string) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return { month: m - 1, year: y };
+}
+
 function sumByMonth(items: Lancamento[], month: number, year: number, vendedor: string | null = null) {
   return filterByVendedor(items, vendedor)
-    .filter((i) => { const d = new Date(i.data); return d.getMonth() === month && d.getFullYear() === year; })
+    .filter((i) => { const d = parseLocalDate(i.data); return d.month === month && d.year === year; })
     .reduce((s, i) => s + i.valor, 0);
 }
 
 function itemsByMonth(items: Lancamento[], month: number, year: number, vendedor: string | null = null) {
   return filterByVendedor(items, vendedor)
-    .filter((i) => { const d = new Date(i.data); return d.getMonth() === month && d.getFullYear() === year; });
+    .filter((i) => { const d = parseLocalDate(i.data); return d.month === month && d.year === year; });
 }
 
 interface Alert {
@@ -156,24 +161,7 @@ export default function Dashboard() {
     return { pct, positive: pct >= 0 };
   }
 
-  // Projections
   const isCurrentMonth = currentMonth === now.getMonth() && currentYear === now.getFullYear();
-  const totalDays = daysInMonth(currentMonth, currentYear);
-  const elapsed = isCurrentMonth ? dayOfMonth(now) : totalDays;
-
-  const projections = useMemo(() => {
-    const cats = ["produto", "servico", "contrato", "acessorio"] as Categoria[];
-    return cats.map(cat => {
-      const atual = totals[cat];
-      const proj = elapsed > 0 ? (atual / elapsed) * totalDays : 0;
-      const meta = currentMetas[cat];
-      const pctProj = meta > 0 ? (proj / meta) * 100 : 0;
-      return { cat, atual, proj, meta, pctProj };
-    });
-  }, [totals, elapsed, totalDays, currentMetas]);
-
-  const totalProj = projections.reduce((s, p) => s + p.proj, 0);
-  const pctTotalProj = metaTotal > 0 ? (totalProj / metaTotal) * 100 : 0;
 
   // Smart Alerts
   const alerts = useMemo(() => {
@@ -215,7 +203,7 @@ export default function Dashboard() {
     }
     list.push(...stockAlerts);
     return list;
-  }, [data, totals, isCurrentMonth, elapsed, now, currentMetas, stockAlerts]);
+  }, [data, totals, isCurrentMonth, now, currentMetas, stockAlerts]);
 
   // Client Ranking
   const clientRanking = useMemo(() => {
@@ -434,42 +422,6 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* Projection Section */}
-      <div className="glass-card p-6 space-y-5" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold text-foreground">Projeção Mensal</h3>
-          <span className="text-[0.85rem] px-3 py-1 rounded-full font-medium bg-secondary text-foreground/70">
-            {isCurrentMonth ? `Dia ${elapsed}/${totalDays}` : `${totalDays} dias`}
-          </span>
-        </div>
-        <div className="p-5 rounded-xl" style={{ background: 'rgba(10,132,255,0.1)', border: '1px solid rgba(10,132,255,0.2)' }}>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-[0.85rem] text-foreground/70 font-medium">Projeção Total</span>
-            <span className="text-[0.85rem] font-bold px-2.5 py-1 rounded-full"
-              style={{ background: `${progressColor(pctTotalProj)}25`, color: progressColor(pctTotalProj) }}>
-              {pctTotalProj.toFixed(0)}%
-            </span>
-          </div>
-          <p className="text-[2rem] font-extrabold text-foreground">{formatCurrency(totalProj)}</p>
-        </div>
-        <div className="space-y-2">
-          {projections.map(p => (
-            <div key={p.cat} className="flex items-center justify-between py-3 border-b border-foreground/10 last:border-0">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ background: CAT_COLORS[p.cat] }} />
-                <span className="text-[0.85rem] text-foreground font-medium">{CATEGORIA_LABELS[p.cat]}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-[0.85rem] font-semibold text-foreground">{formatCurrency(p.proj)}</span>
-                <span className="text-[0.8rem] font-bold px-2.5 py-1 rounded-full"
-                  style={{ background: `${progressColor(p.pctProj)}25`, color: progressColor(p.pctProj) }}>
-                  {p.pctProj.toFixed(0)}%
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Client Ranking */}
       <div className="glass-card p-6 space-y-5" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
