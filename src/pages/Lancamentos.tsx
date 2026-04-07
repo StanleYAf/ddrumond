@@ -31,7 +31,7 @@ export default function Lancamentos() {
 
   const filterMonth = isNaN(mesParam) || mesParam < 0 || mesParam > 11 ? now.getMonth() : mesParam;
   const filterYear = isNaN(anoParam) ? now.getFullYear() : anoParam;
-  const categoria: Categoria = catParam && ["produto", "servico", "contrato", "acessorio"].includes(catParam) ? catParam as Categoria : "produto";
+  const categoria: Categoria | "todos" = catParam && ["produto", "servico", "contrato", "acessorio"].includes(catParam) ? catParam as Categoria : "todos";
 
   function setFilterMonth(m: number) {
     setSearchParams(prev => { prev.set("mes", String(m + 1)); return prev; }, { replace: true });
@@ -39,8 +39,12 @@ export default function Lancamentos() {
   function setFilterYear(y: number) {
     setSearchParams(prev => { prev.set("ano", String(y)); return prev; }, { replace: true });
   }
-  function setCategoria(c: Categoria) {
-    setSearchParams(prev => { prev.set("categoria", c); return prev; }, { replace: true });
+  function setCategoria(c: Categoria | "todos") {
+    setSearchParams(prev => {
+      if (c === "todos") prev.delete("categoria");
+      else prev.set("categoria", c);
+      return prev;
+    }, { replace: true });
   }
 
   const [showForm, setShowForm] = useState(false);
@@ -63,7 +67,8 @@ export default function Lancamentos() {
   const [editData, setEditData] = useState("");
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
-  const fieldLabel = categoria === "acessorio" ? "Item" : categoria === "produto" ? "Produto" : "Serviço";
+  const formCat = categoria === "todos" ? "produto" : categoria as Categoria;
+  const fieldLabel = formCat === "acessorio" ? "Item" : formCat === "produto" ? "Produto" : "Serviço";
 
   function validateForm(c: string, d: string, v: string, dt: string) {
     const result = lancamentoSchema.safeParse({ cliente: c, descricao: d, valor: parseFloat(v) || 0, data: dt });
@@ -82,11 +87,11 @@ export default function Lancamentos() {
     setFormErrors({});
     const newItem: Lancamento = {
       id: crypto.randomUUID(), cliente: cliente.trim(), valor: parseCurrencyMask(valor), data: dataLanc,
-      [CATEGORIA_FIELD[categoria]]: descricao.trim(),
+      [CATEGORIA_FIELD[formCat]]: descricao.trim(),
     };
     setData((prev) => ({
       ...prev,
-      lancamentos: { ...prev.lancamentos, [CATEGORIA_ARRAY[categoria]]: [...prev.lancamentos[CATEGORIA_ARRAY[categoria]], newItem] },
+      lancamentos: { ...prev.lancamentos, [CATEGORIA_ARRAY[formCat]]: [...prev.lancamentos[CATEGORIA_ARRAY[formCat]], newItem] },
     }));
     setCliente(""); setDescricao(""); setValor(""); setShowForm(false);
     toast.success("Lançamento adicionado com sucesso");
@@ -139,9 +144,10 @@ export default function Lancamentos() {
 
   const allEntries = useMemo(() => {
     const entries: (Lancamento & { cat: Categoria })[] = [];
-    (["produto", "servico", "contrato", "acessorio"] as Categoria[]).forEach((cat) => {
+    const catsToShow = categoria === "todos" ? (["produto", "servico", "contrato", "acessorio"] as Categoria[]) : [categoria as Categoria];
+    catsToShow.forEach((cat) => {
       data.lancamentos[CATEGORIA_ARRAY[cat]]
-        .filter((l) => { const d = new Date(l.data); return d.getMonth() === filterMonth && d.getFullYear() === filterYear; })
+        .filter((l) => { const [y, m] = l.data.split("-").map(Number); return (m - 1) === filterMonth && y === filterYear; })
         .forEach((l) => entries.push({ ...l, cat }));
     });
     const q = searchQuery.toLowerCase().trim();
@@ -165,10 +171,10 @@ export default function Lancamentos() {
 
   const totalMes = allEntries.reduce((s, e) => s + e.valor, 0);
   const { metas: currentMetas } = getMetasForMonth(data.historico_metas, filterMonth, filterYear, data.metas, data.meta_semanal);
-  const metaCategoria = currentMetas[categoria];
-  const totalCategoria = data.lancamentos[CATEGORIA_ARRAY[categoria]]
-    .filter((l) => { const d = new Date(l.data); return d.getMonth() === filterMonth && d.getFullYear() === filterYear; })
-    .reduce((s, l) => s + l.valor, 0);
+  const metaCategoria = categoria === "todos"
+    ? Object.values(currentMetas).reduce((a, b) => a + b, 0)
+    : currentMetas[categoria as Categoria];
+  const totalCategoria = totalMes;
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortAsc(!sortAsc);
@@ -245,6 +251,15 @@ export default function Lancamentos() {
 
       {/* Category Pills */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 no-scrollbar">
+        <button onClick={() => setCategoria("todos")}
+          className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all"
+          style={{
+            background: categoria === "todos" ? 'hsl(var(--primary) / 0.2)' : 'hsl(var(--muted))',
+            color: categoria === "todos" ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
+            border: `1px solid ${categoria === "todos" ? 'hsl(var(--primary) / 0.4)' : 'transparent'}`,
+          }}>
+          Todos
+        </button>
         {(["produto", "servico", "contrato", "acessorio"] as Categoria[]).map(cat => (
           <button key={cat} onClick={() => setCategoria(cat)}
             className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all"
@@ -265,7 +280,7 @@ export default function Lancamentos() {
           <p className="text-lg font-bold text-foreground">{formatCurrency(totalMes)}</p>
         </div>
         <div>
-          <p className="text-[11px] font-medium text-muted-foreground">{CATEGORIA_LABELS[categoria]}</p>
+          <p className="text-[11px] font-medium text-muted-foreground">{categoria === "todos" ? "Total" : CATEGORIA_LABELS[categoria as Categoria]}</p>
           <p className="text-lg font-bold text-foreground">{formatCurrency(totalCategoria)}</p>
         </div>
         <div>
