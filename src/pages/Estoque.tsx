@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
 import {
   Package, Search, Camera, Plus, Pencil, ArrowDownToLine, ArrowUpFromLine,
   X, AlertTriangle, Barcode, Download, RotateCcw, Archive, TrendingUp,
-  Clock, Eye,
+  Clock, Eye, Trash2,
 } from "lucide-react";
 import { ListSkeleton } from "@/components/LoadingSkeleton";
 
@@ -409,6 +409,14 @@ export default function Estoque() {
     setShowForm(true);
   }
 
+  async function handleDeleteProduct(p: Produto) {
+    if (!confirm(`Tem certeza que deseja excluir "${p.nome}"? Esta ação não pode ser desfeita.`)) return;
+    const { error } = await supabase.from("produtos_estoque").delete().eq("id", p.id);
+    if (error) { toast.error("Erro ao excluir produto"); return; }
+    setProdutos(prev => prev.filter(x => x.id !== p.id));
+    toast.success("Produto excluído");
+  }
+
   function exportMovCSV() {
     const rows = filteredMov.map(m => {
       const p = produtoMap.get(m.produto_id);
@@ -534,6 +542,9 @@ export default function Estoque() {
                         </button>
                         <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg hover:bg-muted" title="Editar">
                           <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
+                        <button onClick={() => handleDeleteProduct(p)} className="p-1.5 rounded-lg hover:bg-destructive/10" title="Excluir">
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
                         </button>
                       </div>
                     </div>
