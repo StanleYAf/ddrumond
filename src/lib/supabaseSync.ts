@@ -94,12 +94,7 @@ export async function loadFromSupabase(userId: string): Promise<AppData> {
     (h) => h.mes === now.getMonth() + 1 && h.ano === now.getFullYear()
   );
 
-  // If DB is empty, seed with initial data
-  const totalRows = (lancRes.data?.length ?? 0) + (indRes.data?.length ?? 0) + (pvRes.data?.length ?? 0) + (vendRes.data?.length ?? 0);
-  if (totalRows === 0) {
-    await seedInitialData(userId);
-    return loadFromSupabase(userId); // reload after seeding
-  }
+  // Shared data - no seeding needed since all users see all data
 
   return {
     metas: currentMeta?.metas ?? { ...INITIAL_DATA.metas },
