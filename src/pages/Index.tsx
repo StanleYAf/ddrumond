@@ -422,42 +422,6 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* Projection Section */}
-      <div className="glass-card p-6 space-y-5" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold text-foreground">Projeção Mensal</h3>
-          <span className="text-[0.85rem] px-3 py-1 rounded-full font-medium bg-secondary text-foreground/70">
-            {isCurrentMonth ? `Dia ${elapsed}/${totalDays}` : `${totalDays} dias`}
-          </span>
-        </div>
-        <div className="p-5 rounded-xl" style={{ background: 'rgba(10,132,255,0.1)', border: '1px solid rgba(10,132,255,0.2)' }}>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-[0.85rem] text-foreground/70 font-medium">Projeção Total</span>
-            <span className="text-[0.85rem] font-bold px-2.5 py-1 rounded-full"
-              style={{ background: `${progressColor(pctTotalProj)}25`, color: progressColor(pctTotalProj) }}>
-              {pctTotalProj.toFixed(0)}%
-            </span>
-          </div>
-          <p className="text-[2rem] font-extrabold text-foreground">{formatCurrency(totalProj)}</p>
-        </div>
-        <div className="space-y-2">
-          {projections.map(p => (
-            <div key={p.cat} className="flex items-center justify-between py-3 border-b border-foreground/10 last:border-0">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ background: CAT_COLORS[p.cat] }} />
-                <span className="text-[0.85rem] text-foreground font-medium">{CATEGORIA_LABELS[p.cat]}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-[0.85rem] font-semibold text-foreground">{formatCurrency(p.proj)}</span>
-                <span className="text-[0.8rem] font-bold px-2.5 py-1 rounded-full"
-                  style={{ background: `${progressColor(p.pctProj)}25`, color: progressColor(p.pctProj) }}>
-                  {p.pctProj.toFixed(0)}%
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Client Ranking */}
       <div className="glass-card p-6 space-y-5" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
