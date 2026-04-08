@@ -318,6 +318,10 @@ export default function Lancamentos() {
               <input value={descricao} onChange={e => setDescricao(e.target.value)} className="ios-input w-full" placeholder={fieldLabel} />
               <ErrorMsg msg={formErrors.descricao} />
             </div>
+            <div>
+              <label className="text-[11px] font-medium block mb-1 text-muted-foreground">{tipoLabel}</label>
+              <input value={tipo} onChange={e => setTipo(e.target.value)} className="ios-input w-full" placeholder={tipoLabel} />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Valor (R$)</label>
@@ -440,6 +444,10 @@ export default function Lancamentos() {
               <label className="text-[11px] font-medium block mb-1 text-muted-foreground">{editFieldLabel}</label>
               <input value={editDescricao} onChange={e => setEditDescricao(e.target.value)} className="ios-input w-full" />
               <ErrorMsg msg={editErrors.descricao} />
+            </div>
+            <div>
+              <label className="text-[11px] font-medium block mb-1 text-muted-foreground">{editTipoLabel}</label>
+              <input value={editTipo} onChange={e => setEditTipo(e.target.value)} className="ios-input w-full" placeholder={editTipoLabel} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
