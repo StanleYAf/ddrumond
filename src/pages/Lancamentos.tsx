@@ -56,6 +56,7 @@ export default function Lancamentos() {
 
   const [cliente, setCliente] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [tipo, setTipo] = useState("");
   const [valor, setValor] = useState("");
   const [dataLanc, setDataLanc] = useState(now.toISOString().slice(0, 10));
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -63,12 +64,14 @@ export default function Lancamentos() {
   const [editItem, setEditItem] = useState<(Lancamento & { cat: Categoria }) | null>(null);
   const [editCliente, setEditCliente] = useState("");
   const [editDescricao, setEditDescricao] = useState("");
+  const [editTipo, setEditTipo] = useState("");
   const [editValor, setEditValor] = useState("");
   const [editData, setEditData] = useState("");
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
   const formCat = categoria === "todos" ? "produto" : categoria as Categoria;
   const fieldLabel = formCat === "acessorio" ? "Acessório" : formCat === "produto" ? "Produto" : "Serviço";
+  const tipoLabel = formCat === "acessorio" ? "Tipo de Acessório" : formCat === "produto" ? "Tipo de Produto" : formCat === "contrato" ? "Tipo de Contrato" : "Tipo de Serviço";
 
   function validateForm(c: string, d: string, v: string, dt: string) {
     const result = lancamentoSchema.safeParse({ cliente: c, descricao: d, valor: parseFloat(v) || 0, data: dt });
@@ -88,12 +91,13 @@ export default function Lancamentos() {
     const newItem: Lancamento = {
       id: crypto.randomUUID(), cliente: cliente.trim(), valor: parseCurrencyMask(valor), data: dataLanc,
       [CATEGORIA_FIELD[formCat]]: descricao.trim(),
+      tipo: tipo.trim() || undefined,
     };
     setData((prev) => ({
       ...prev,
       lancamentos: { ...prev.lancamentos, [CATEGORIA_ARRAY[formCat]]: [...prev.lancamentos[CATEGORIA_ARRAY[formCat]], newItem] },
     }));
-    setCliente(""); setDescricao(""); setValor(""); setShowForm(false);
+    setCliente(""); setDescricao(""); setTipo(""); setValor(""); setShowForm(false);
     toast.success("Lançamento adicionado com sucesso");
   }
 
@@ -101,6 +105,7 @@ export default function Lancamentos() {
     setEditItem(entry);
     setEditCliente(entry.cliente);
     setEditDescricao(getDescricao(entry));
+    setEditTipo(entry.tipo || "");
     setEditValor(numberToCurrencyMask(entry.valor));
     setEditData(entry.data);
     setEditErrors({});
@@ -118,7 +123,7 @@ export default function Lancamentos() {
       lancamentos: {
         ...prev.lancamentos,
         [arrKey]: prev.lancamentos[arrKey].map(l =>
-          l.id === editItem.id ? { ...l, cliente: editCliente.trim(), valor: parseCurrencyMask(editValor), data: editData, [fieldKey]: editDescricao.trim() } : l
+          l.id === editItem.id ? { ...l, cliente: editCliente.trim(), valor: parseCurrencyMask(editValor), data: editData, [fieldKey]: editDescricao.trim(), tipo: editTipo.trim() || undefined } : l
         ),
       },
     }));
@@ -188,6 +193,7 @@ export default function Lancamentos() {
   };
 
   const editFieldLabel = editItem ? (editItem.cat === "acessorio" ? "Acessório" : editItem.cat === "produto" ? "Produto" : "Serviço") : "";
+  const editTipoLabel = editItem ? (editItem.cat === "acessorio" ? "Tipo de Acessório" : editItem.cat === "produto" ? "Tipo de Produto" : editItem.cat === "contrato" ? "Tipo de Contrato" : "Tipo de Serviço") : "";
 
   function ErrorMsg({ msg }: { msg?: string }) {
     if (!msg) return null;
@@ -312,6 +318,10 @@ export default function Lancamentos() {
               <input value={descricao} onChange={e => setDescricao(e.target.value)} className="ios-input w-full" placeholder={fieldLabel} />
               <ErrorMsg msg={formErrors.descricao} />
             </div>
+            <div>
+              <label className="text-[11px] font-medium block mb-1 text-muted-foreground">{tipoLabel}</label>
+              <input value={tipo} onChange={e => setTipo(e.target.value)} className="ios-input w-full" placeholder={tipoLabel} />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Valor (R$)</label>
@@ -381,7 +391,7 @@ export default function Lancamentos() {
                     <span className="text-sm font-medium text-foreground truncate">{e.cliente}</span>
                   </div>
                   <p className="text-xs mt-0.5 ml-3.5 truncate text-muted-foreground">
-                    {getDescricao(e)} · {formatDate(e.data)}
+                    {getDescricao(e)}{e.tipo ? ` · ${e.tipo}` : ''} · {formatDate(e.data)}
                   </p>
                 </button>
                 <div className="flex items-center gap-2 flex-shrink-0">
@@ -434,6 +444,10 @@ export default function Lancamentos() {
               <label className="text-[11px] font-medium block mb-1 text-muted-foreground">{editFieldLabel}</label>
               <input value={editDescricao} onChange={e => setEditDescricao(e.target.value)} className="ios-input w-full" />
               <ErrorMsg msg={editErrors.descricao} />
+            </div>
+            <div>
+              <label className="text-[11px] font-medium block mb-1 text-muted-foreground">{editTipoLabel}</label>
+              <input value={editTipo} onChange={e => setEditTipo(e.target.value)} className="ios-input w-full" placeholder={editTipoLabel} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
