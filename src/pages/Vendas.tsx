@@ -433,8 +433,17 @@ export default function Vendas() {
               {ORIGENS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Input type="date" className="w-36 h-9" value={filterDateStart} onChange={(e) => setFilterDateStart(e.target.value)} />
-          <Input type="date" className="w-36 h-9" value={filterDateEnd} onChange={(e) => setFilterDateEnd(e.target.value)} />
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">De</span>
+            <Input type="date" className="w-36 h-9" value={filterDateStart} onChange={(e) => setFilterDateStart(e.target.value)} />
+            <span className="text-xs text-muted-foreground whitespace-nowrap">até</span>
+            <Input type="date" className="w-36 h-9" value={filterDateEnd} onChange={(e) => setFilterDateEnd(e.target.value)} />
+            {(filterDateStart || filterDateEnd) && (
+              <button className="text-muted-foreground hover:text-foreground" onClick={() => { setFilterDateStart(""); setFilterDateEnd(""); }}>
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
