@@ -9,6 +9,7 @@ export interface Lancamento {
   servico?: string;
   item?: string;
   vendedor?: string;
+  tipo?: string;
 }
 
 export interface IndicadorSemanal {
