@@ -409,6 +409,8 @@ export default function Vendas() {
     }
   };
 
+  const activeLead = activeId ? leads.find((l) => l.id === activeId) : null;
+
   if (loading) {
     return <div className="p-6 text-muted-foreground">Carregando pipeline...</div>;
   }
