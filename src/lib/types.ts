@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+export interface LancamentoItem {
+  id: string;
+  lancamento_id: string;
+  identificacao?: string;
+  marca?: string;
+  modelo?: string;
+  observacao?: string;
+}
+
 export interface Lancamento {
   id: string;
   cliente: string;
@@ -10,6 +19,7 @@ export interface Lancamento {
   item?: string;
   vendedor?: string;
   tipo?: string;
+  itens?: LancamentoItem[];
 }
 
 export interface IndicadorSemanal {

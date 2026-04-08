@@ -95,6 +95,47 @@ export type Database = {
         }
         Relationships: []
       }
+      lancamento_itens: {
+        Row: {
+          created_at: string
+          id: string
+          identificacao: string | null
+          lancamento_id: string
+          marca: string | null
+          modelo: string | null
+          observacao: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          identificacao?: string | null
+          lancamento_id: string
+          marca?: string | null
+          modelo?: string | null
+          observacao?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          identificacao?: string | null
+          lancamento_id?: string
+          marca?: string | null
+          modelo?: string | null
+          observacao?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lancamento_itens_lancamento_id_fkey"
+            columns: ["lancamento_id"]
+            isOneToOne: false
+            referencedRelation: "lancamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lancamentos: {
         Row: {
           categoria: Database["public"]["Enums"]["categoria_lancamento"]
