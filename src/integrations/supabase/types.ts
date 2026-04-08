@@ -356,15 +356,19 @@ export type Database = {
           created_at: string
           estoque_atual: number
           estoque_minimo: number
+          fabricante: string | null
           fornecedor_id: string | null
           id: string
+          local_estoque: string | null
           nome: string
           numero_serie: string | null
           preco_custo: number | null
           preco_venda: number | null
+          registro_anvisa: string | null
           unidade: string
           updated_at: string
           user_id: string
+          validade: string | null
         }
         Insert: {
           ativo?: boolean
@@ -373,15 +377,19 @@ export type Database = {
           created_at?: string
           estoque_atual?: number
           estoque_minimo?: number
+          fabricante?: string | null
           fornecedor_id?: string | null
           id?: string
+          local_estoque?: string | null
           nome: string
           numero_serie?: string | null
           preco_custo?: number | null
           preco_venda?: number | null
+          registro_anvisa?: string | null
           unidade?: string
           updated_at?: string
           user_id: string
+          validade?: string | null
         }
         Update: {
           ativo?: boolean
@@ -390,15 +398,19 @@ export type Database = {
           created_at?: string
           estoque_atual?: number
           estoque_minimo?: number
+          fabricante?: string | null
           fornecedor_id?: string | null
           id?: string
+          local_estoque?: string | null
           nome?: string
           numero_serie?: string | null
           preco_custo?: number | null
           preco_venda?: number | null
+          registro_anvisa?: string | null
           unidade?: string
           updated_at?: string
           user_id?: string
+          validade?: string | null
         }
         Relationships: [
           {
