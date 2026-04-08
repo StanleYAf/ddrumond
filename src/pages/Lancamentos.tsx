@@ -56,6 +56,7 @@ export default function Lancamentos() {
 
   const [cliente, setCliente] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [tipo, setTipo] = useState("");
   const [valor, setValor] = useState("");
   const [dataLanc, setDataLanc] = useState(now.toISOString().slice(0, 10));
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -63,12 +64,14 @@ export default function Lancamentos() {
   const [editItem, setEditItem] = useState<(Lancamento & { cat: Categoria }) | null>(null);
   const [editCliente, setEditCliente] = useState("");
   const [editDescricao, setEditDescricao] = useState("");
+  const [editTipo, setEditTipo] = useState("");
   const [editValor, setEditValor] = useState("");
   const [editData, setEditData] = useState("");
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
   const formCat = categoria === "todos" ? "produto" : categoria as Categoria;
   const fieldLabel = formCat === "acessorio" ? "Acessório" : formCat === "produto" ? "Produto" : "Serviço";
+  const tipoLabel = formCat === "acessorio" ? "Tipo de Acessório" : formCat === "produto" ? "Tipo de Produto" : formCat === "contrato" ? "Tipo de Contrato" : "Tipo de Serviço";
 
   function validateForm(c: string, d: string, v: string, dt: string) {
     const result = lancamentoSchema.safeParse({ cliente: c, descricao: d, valor: parseFloat(v) || 0, data: dt });
