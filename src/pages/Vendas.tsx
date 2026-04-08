@@ -267,6 +267,9 @@ export default function Vendas() {
   // Detail note
   const [newNote, setNewNote] = useState("");
 
+  // Vendedores
+  const [vendedores, setVendedores] = useState<{ id: string; nome: string }[]>([]);
+
   // ── Fetch ──
   const fetchLeads = useCallback(async () => {
     const { data, error } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
@@ -275,6 +278,13 @@ export default function Vendas() {
   }, []);
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
+
+  // Fetch vendedores ativos
+  useEffect(() => {
+    supabase.from("vendedores").select("id, nome").eq("ativo", true).order("nome").then(({ data }) => {
+      if (data) setVendedores(data);
+    });
+  }, []);
 
   // Realtime
   useEffect(() => {
@@ -523,7 +533,12 @@ export default function Vendas() {
             </div>
             <div>
               <Label>Responsável *</Label>
-              <Input value={form.responsavel} onChange={(e) => setForm({ ...form, responsavel: e.target.value })} />
+              <Select value={form.responsavel} onValueChange={(v) => setForm({ ...form, responsavel: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent>
+                  {vendedores.map((v) => <SelectItem key={v.id} value={v.nome}>{v.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Observações</Label>
