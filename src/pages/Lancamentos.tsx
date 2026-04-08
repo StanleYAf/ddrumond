@@ -391,7 +391,7 @@ export default function Lancamentos() {
                     <span className="text-sm font-medium text-foreground truncate">{e.cliente}</span>
                   </div>
                   <p className="text-xs mt-0.5 ml-3.5 truncate text-muted-foreground">
-                    {getDescricao(e)} · {formatDate(e.data)}
+                    {getDescricao(e)}{e.tipo ? ` · ${e.tipo}` : ''} · {formatDate(e.data)}
                   </p>
                 </button>
                 <div className="flex items-center gap-2 flex-shrink-0">
