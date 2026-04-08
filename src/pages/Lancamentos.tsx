@@ -1,13 +1,15 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAppData } from "@/lib/dataContext";
-import { CATEGORIA_LABELS, CATEGORIA_ARRAY, CATEGORIA_FIELD, MESES, formatCurrency, formatDate, lancamentoSchema, getMetasForMonth, type Categoria, type Lancamento } from "@/lib/types";
+import { CATEGORIA_LABELS, CATEGORIA_ARRAY, CATEGORIA_FIELD, MESES, formatCurrency, formatDate, lancamentoSchema, getMetasForMonth, type Categoria, type Lancamento, type LancamentoItem } from "@/lib/types";
 import { applyCurrencyMask, parseCurrencyMask, numberToCurrencyMask } from "@/lib/currencyMask";
-import { Trash2, ChevronDown, Search, ChevronUp, Pencil, X, ChevronLeft, ChevronRight, FileX, Download } from "lucide-react";
+import { Trash2, ChevronDown, Search, ChevronUp, Pencil, X, ChevronLeft, ChevronRight, FileX, Download, Plus } from "lucide-react";
 import { ListSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/authContext";
 
 const CAT_COLORS: Record<Categoria, string> = {
   produto: "#0A84FF", servico: "#30D158", contrato: "#FFD60A", acessorio: "#BF5AF2",
@@ -20,8 +22,19 @@ function getDescricao(e: Lancamento) {
   return e.produto || e.servico || e.item || "";
 }
 
+const emptyItem = (): Omit<LancamentoItem, "lancamento_id"> => ({
+  id: crypto.randomUUID(),
+  identificacao: "",
+  marca: "",
+  modelo: "",
+  observacao: "",
+});
+
+const supportsItens = (cat: Categoria | "todos") => cat === "produto" || cat === "acessorio";
+
 export default function Lancamentos() {
   const { data, setData, loading, error, undoDelete } = useAppData();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const now = new Date();
 
@@ -60,6 +73,7 @@ export default function Lancamentos() {
   const [valor, setValor] = useState("");
   const [dataLanc, setDataLanc] = useState(now.toISOString().slice(0, 10));
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [formItens, setFormItens] = useState<Omit<LancamentoItem, "lancamento_id">[]>([emptyItem()]);
 
   const [editItem, setEditItem] = useState<(Lancamento & { cat: Categoria }) | null>(null);
   const [editCliente, setEditCliente] = useState("");
@@ -68,6 +82,8 @@ export default function Lancamentos() {
   const [editValor, setEditValor] = useState("");
   const [editData, setEditData] = useState("");
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const [editItens, setEditItens] = useState<LancamentoItem[]>([]);
+  const [editItensLoading, setEditItensLoading] = useState(false);
 
   const formCat = categoria === "todos" ? "produto" : categoria as Categoria;
   const fieldLabel = formCat === "acessorio" ? "Acessório" : formCat === "produto" ? "Produto" : "Serviço";
@@ -83,13 +99,14 @@ export default function Lancamentos() {
     return null;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const errs = validateForm(cliente, descricao, String(parseCurrencyMask(valor)), dataLanc);
     if (errs) { setFormErrors(errs); toast.error("Corrija os campos inválidos"); return; }
     setFormErrors({});
+    const newId = crypto.randomUUID();
     const newItem: Lancamento = {
-      id: crypto.randomUUID(), cliente: cliente.trim(), valor: parseCurrencyMask(valor), data: dataLanc,
+      id: newId, cliente: cliente.trim(), valor: parseCurrencyMask(valor), data: dataLanc,
       [CATEGORIA_FIELD[formCat]]: descricao.trim(),
       tipo: tipo.trim() || undefined,
     };
@@ -97,11 +114,30 @@ export default function Lancamentos() {
       ...prev,
       lancamentos: { ...prev.lancamentos, [CATEGORIA_ARRAY[formCat]]: [...prev.lancamentos[CATEGORIA_ARRAY[formCat]], newItem] },
     }));
-    setCliente(""); setDescricao(""); setTipo(""); setValor(""); setShowForm(false);
+
+    // Save itens for produto/acessorio
+    if (supportsItens(formCat) && user) {
+      const validItens = formItens.filter(it => it.identificacao || it.marca || it.modelo || it.observacao);
+      if (validItens.length > 0) {
+        await supabase.from("lancamento_itens").insert(
+          validItens.map(it => ({
+            id: it.id,
+            lancamento_id: newId,
+            user_id: user.id,
+            identificacao: it.identificacao || null,
+            marca: it.marca || null,
+            modelo: it.modelo || null,
+            observacao: it.observacao || null,
+          }))
+        );
+      }
+    }
+
+    setCliente(""); setDescricao(""); setTipo(""); setValor(""); setFormItens([emptyItem()]); setShowForm(false);
     toast.success("Lançamento adicionado com sucesso");
   }
 
-  function openEdit(entry: Lancamento & { cat: Categoria }) {
+  async function openEdit(entry: Lancamento & { cat: Categoria }) {
     setEditItem(entry);
     setEditCliente(entry.cliente);
     setEditDescricao(getDescricao(entry));
@@ -109,10 +145,28 @@ export default function Lancamentos() {
     setEditValor(numberToCurrencyMask(entry.valor));
     setEditData(entry.data);
     setEditErrors({});
+    setEditItens([]);
+
+    if (supportsItens(entry.cat)) {
+      setEditItensLoading(true);
+      const { data: itensData } = await supabase
+        .from("lancamento_itens")
+        .select("*")
+        .eq("lancamento_id", entry.id);
+      setEditItens((itensData ?? []).map((it: any) => ({
+        id: it.id,
+        lancamento_id: it.lancamento_id,
+        identificacao: it.identificacao ?? "",
+        marca: it.marca ?? "",
+        modelo: it.modelo ?? "",
+        observacao: it.observacao ?? "",
+      })));
+      setEditItensLoading(false);
+    }
   }
 
-  function handleEditSave() {
-    if (!editItem) return;
+  async function handleEditSave() {
+    if (!editItem || !user) return;
     const errs = validateForm(editCliente, editDescricao, String(parseCurrencyMask(editValor)), editData);
     if (errs) { setEditErrors(errs); toast.error("Corrija os campos inválidos"); return; }
     setEditErrors({});
@@ -127,6 +181,26 @@ export default function Lancamentos() {
         ),
       },
     }));
+
+    // Sync itens for produto/acessorio
+    if (supportsItens(editItem.cat)) {
+      // Delete all existing, then re-insert
+      await supabase.from("lancamento_itens").delete().eq("lancamento_id", editItem.id);
+      const validItens = editItens.filter(it => it.identificacao || it.marca || it.modelo || it.observacao);
+      if (validItens.length > 0) {
+        await supabase.from("lancamento_itens").insert(
+          validItens.map(it => ({
+            lancamento_id: editItem.id,
+            user_id: user.id,
+            identificacao: it.identificacao || null,
+            marca: it.marca || null,
+            modelo: it.modelo || null,
+            observacao: it.observacao || null,
+          }))
+        );
+      }
+    }
+
     setEditItem(null);
     toast.success("Lançamento atualizado");
   }
@@ -198,6 +272,77 @@ export default function Lancamentos() {
   function ErrorMsg({ msg }: { msg?: string }) {
     if (!msg) return null;
     return <p className="text-[11px] mt-1 font-medium" style={{ color: '#FF453A' }}>{msg}</p>;
+  }
+
+  // Item list helpers
+  function updateFormItem(index: number, field: string, value: string) {
+    setFormItens(prev => prev.map((it, i) => i === index ? { ...it, [field]: value } : it));
+  }
+  function removeFormItem(index: number) {
+    setFormItens(prev => prev.filter((_, i) => i !== index));
+  }
+  function addFormItem() {
+    setFormItens(prev => [...prev, emptyItem()]);
+  }
+
+  function updateEditItemField(index: number, field: string, value: string) {
+    setEditItens(prev => prev.map((it, i) => i === index ? { ...it, [field]: value } : it));
+  }
+  function removeEditItem(index: number) {
+    setEditItens(prev => prev.filter((_, i) => i !== index));
+  }
+  function addEditItem() {
+    setEditItens(prev => [...prev, { id: crypto.randomUUID(), lancamento_id: editItem?.id || "", identificacao: "", marca: "", modelo: "", observacao: "" }]);
+  }
+
+  function ItemFields({ items, onUpdate, onRemove, onAdd }: {
+    items: { id: string; identificacao?: string; marca?: string; modelo?: string; observacao?: string }[];
+    onUpdate: (i: number, field: string, value: string) => void;
+    onRemove: (i: number) => void;
+    onAdd: () => void;
+  }) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="text-[11px] font-medium text-muted-foreground">Itens do Lançamento</label>
+          <button type="button" onClick={onAdd} className="flex items-center gap-1 text-xs font-medium text-primary">
+            <Plus className="h-3.5 w-3.5" /> Adicionar Item
+          </button>
+        </div>
+        {items.map((it, i) => (
+          <div key={it.id} className="p-3 rounded-xl border border-border space-y-2 bg-muted/30">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-muted-foreground">Item {i + 1}</span>
+              {items.length > 1 && (
+                <button type="button" onClick={() => onRemove(i)} className="p-1 rounded hover:bg-muted">
+                  <Trash2 className="h-3.5 w-3.5" style={{ color: '#FF453A' }} />
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground">Identificação</label>
+                <input value={it.identificacao || ""} onChange={e => onUpdate(i, "identificacao", e.target.value)} className="ios-input w-full text-xs" placeholder="Nº série / ID" />
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground">Marca</label>
+                <input value={it.marca || ""} onChange={e => onUpdate(i, "marca", e.target.value)} className="ios-input w-full text-xs" placeholder="Marca" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground">Modelo</label>
+                <input value={it.modelo || ""} onChange={e => onUpdate(i, "modelo", e.target.value)} className="ios-input w-full text-xs" placeholder="Modelo" />
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground">Observação</label>
+                <input value={it.observacao || ""} onChange={e => onUpdate(i, "observacao", e.target.value)} className="ios-input w-full text-xs" placeholder="Observação" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (loading) return <ListSkeleton />;
@@ -297,7 +442,7 @@ export default function Lancamentos() {
 
       {/* New Entry Button / Form */}
       {!showForm ? (
-        <button onClick={() => { setShowForm(true); setFormErrors({}); }}
+        <button onClick={() => { setShowForm(true); setFormErrors({}); setFormItens([emptyItem()]); }}
           className="w-full py-3 rounded-2xl text-base font-semibold text-foreground bg-primary">
           + Novo Lançamento
         </button>
@@ -334,6 +479,16 @@ export default function Lancamentos() {
                 <ErrorMsg msg={formErrors.data} />
               </div>
             </div>
+
+            {supportsItens(formCat) && (
+              <ItemFields
+                items={formItens}
+                onUpdate={updateFormItem}
+                onRemove={removeFormItem}
+                onAdd={addFormItem}
+              />
+            )}
+
             <button type="submit" className="w-full h-12 rounded-xl text-base font-semibold text-foreground bg-primary">
               Lançar
             </button>
@@ -426,7 +581,7 @@ export default function Lancamentos() {
       {/* Edit Modal */}
       {editItem && (
         <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
-          <div className="w-full max-w-md rounded-t-2xl md:rounded-2xl p-5 space-y-4 bg-popover border border-border">
+          <div className="w-full max-w-md rounded-t-2xl md:rounded-2xl p-5 space-y-4 bg-popover border border-border max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-semibold text-foreground">Editar Lançamento</h3>
               <button onClick={() => setEditItem(null)}><X className="h-5 w-5 text-muted-foreground" /></button>
@@ -461,6 +616,20 @@ export default function Lancamentos() {
                 <ErrorMsg msg={editErrors.data} />
               </div>
             </div>
+
+            {supportsItens(editItem.cat) && (
+              editItensLoading ? (
+                <p className="text-xs text-muted-foreground text-center py-2">Carregando itens...</p>
+              ) : (
+                <ItemFields
+                  items={editItens}
+                  onUpdate={updateEditItemField}
+                  onRemove={removeEditItem}
+                  onAdd={addEditItem}
+                />
+              )
+            )}
+
             <button onClick={handleEditSave} className="w-full h-12 rounded-xl text-base font-semibold text-foreground bg-primary">
               Salvar Alterações
             </button>
