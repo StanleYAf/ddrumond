@@ -68,7 +68,7 @@ export default function Lancamentos() {
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
   const formCat = categoria === "todos" ? "produto" : categoria as Categoria;
-  const fieldLabel = formCat === "acessorio" ? "Item" : formCat === "produto" ? "Produto" : "Serviço";
+  const fieldLabel = formCat === "acessorio" ? "Acessório" : formCat === "produto" ? "Produto" : "Serviço";
 
   function validateForm(c: string, d: string, v: string, dt: string) {
     const result = lancamentoSchema.safeParse({ cliente: c, descricao: d, valor: parseFloat(v) || 0, data: dt });
@@ -187,7 +187,7 @@ export default function Lancamentos() {
     return sortAsc ? <ChevronUp className="h-3 w-3 inline ml-0.5" /> : <ChevronDown className="h-3 w-3 inline ml-0.5" />;
   };
 
-  const editFieldLabel = editItem ? (editItem.cat === "acessorio" ? "Item" : editItem.cat === "produto" ? "Produto" : "Serviço") : "";
+  const editFieldLabel = editItem ? (editItem.cat === "acessorio" ? "Acessório" : editItem.cat === "produto" ? "Produto" : "Serviço") : "";
 
   function ErrorMsg({ msg }: { msg?: string }) {
     if (!msg) return null;
