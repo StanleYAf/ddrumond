@@ -382,28 +382,32 @@ export default function Vendas() {
 
     const leadId = active.id as string;
     const overId = over.id as string;
+    const lead = leads.find((l) => l.id === leadId);
+    if (!lead) return;
 
-    // Check if dropped on a column
-    const targetEtapa = ETAPAS.find((et) => et.key === overId);
-    if (targetEtapa) {
-      const lead = leads.find((l) => l.id === leadId);
-      if (lead && lead.etapa !== targetEtapa.key) {
-        await handleMoveTo(lead, targetEtapa.key);
+    // Determine target etapa: either the column itself or the column of the card we dropped on
+    let targetEtapa: Etapa | null = null;
+    const etapaMatch = ETAPAS.find((et) => et.key === overId);
+    if (etapaMatch) {
+      targetEtapa = etapaMatch.key;
+    } else {
+      // Dropped on a card — use that card's etapa
+      const targetLead = leads.find((l) => l.id === overId);
+      if (targetLead) {
+        targetEtapa = targetLead.etapa;
       }
-      return;
     }
 
-    // Dropped on another card — find its column
-    const targetLead = leads.find((l) => l.id === overId);
-    if (targetLead) {
-      const lead = leads.find((l) => l.id === leadId);
-      if (lead && lead.etapa !== targetLead.etapa) {
-        await handleMoveTo(lead, targetLead.etapa);
+    if (targetEtapa && lead.etapa !== targetEtapa) {
+      // Optimistic update
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, etapa: targetEtapa! } : l)));
+      const { error } = await supabase.from("leads").update({ etapa: targetEtapa as any }).eq("id", lead.id);
+      if (error) {
+        toast.error("Erro ao mover lead");
+        fetchLeads(); // revert
       }
     }
   };
-
-  const activeLead = activeId ? leads.find((l) => l.id === activeId) : null;
 
   if (loading) {
     return <div className="p-6 text-muted-foreground">Carregando pipeline...</div>;
