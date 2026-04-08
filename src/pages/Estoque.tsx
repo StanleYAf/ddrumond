@@ -57,6 +57,12 @@ interface QuickMoveState {
 }
 
 type TabKey = "produtos" | "movimentacoes" | "alertas" | "aguardando";
+type EstoqueSource = "dsh" | "dmedical";
+
+const ESTOQUE_TABLES: Record<EstoqueSource, { produtos: string; movimentacoes: string; pendentes: string }> = {
+  dsh: { produtos: "produtos_estoque", movimentacoes: "movimentacoes_estoque", pendentes: "pendentes_estoque" },
+  dmedical: { produtos: "produtos_estoque_2", movimentacoes: "movimentacoes_estoque_2", pendentes: "pendentes_estoque_2" },
+};
 
 const TIPO_COLORS: Record<string, string> = {
   entrada: "#30D158",
@@ -79,6 +85,8 @@ export default function Estoque() {
   const [vendedores, setVendedores] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>("produtos");
+  const [estoqueSource, setEstoqueSource] = useState<EstoqueSource>("dsh");
+  const tbl = ESTOQUE_TABLES[estoqueSource];
   const [searchQuery, setSearchQuery] = useState("");
   const [quickMove, setQuickMove] = useState<QuickMoveState | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -120,23 +128,24 @@ export default function Estoque() {
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
+    const tables = ESTOQUE_TABLES[estoqueSource];
     const [prodRes, movRes, fornRes, vendRes, pendRes] = await Promise.all([
-      supabase.from("produtos_estoque").select("*").order("nome"),
-      supabase.from("movimentacoes_estoque").select("*").order("created_at", { ascending: false }),
+      supabase.from(tables.produtos as any).select("*").order("nome"),
+      supabase.from(tables.movimentacoes as any).select("*").order("created_at", { ascending: false }),
       supabase.from("fornecedores").select("id, nome").order("nome"),
       supabase.from("vendedores").select("id, nome").order("nome"),
-      supabase.from("pendentes_estoque").select("*").eq("status", "pendente").order("created_at", { ascending: false }),
+      supabase.from(tables.pendentes as any).select("*").eq("status", "pendente").order("created_at", { ascending: false }),
     ]);
-    if (prodRes.data) setProdutos(prodRes.data.map(d => ({
+    if (prodRes.data) setProdutos((prodRes.data as any[]).map(d => ({
       ...d, estoque_atual: Number(d.estoque_atual), estoque_minimo: Number(d.estoque_minimo),
       preco_custo: d.preco_custo ? Number(d.preco_custo) : null, preco_venda: d.preco_venda ? Number(d.preco_venda) : null,
     })));
-    if (movRes.data) setMovimentacoes(movRes.data.map(m => ({ ...m, quantidade: Number(m.quantidade) })));
+    if (movRes.data) setMovimentacoes((movRes.data as any[]).map(m => ({ ...m, quantidade: Number(m.quantidade) })));
     if (fornRes.data) setFornecedores(fornRes.data);
     if (vendRes.data) setVendedores(vendRes.data);
-    if (pendRes.data) setPendentes(pendRes.data.map(p => ({ ...p, quantidade: Number(p.quantidade) })));
+    if (pendRes.data) setPendentes((pendRes.data as any[]).map(p => ({ ...p, quantidade: Number(p.quantidade) })));
     setLoading(false);
-  }, [user]);
+  }, [user, estoqueSource]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -256,7 +265,7 @@ export default function Estoque() {
       const trimmed = code.trim();
       const found = produtos.find(p => p.codigo_barras?.trim() === trimmed);
       if (found) {
-        const { error } = await supabase.from("pendentes_estoque").insert({
+        const { error } = await supabase.from(tbl.pendentes as any).insert({
           user_id: user.id, produto_id: found.id, quantidade: 1,
         });
         if (!error) {
@@ -339,12 +348,12 @@ export default function Estoque() {
     setSaving(true);
     const { produto, tipo, quantidade, observacao, documento_ref } = quickMove;
     const novoEstoque = tipo === "entrada" ? produto.estoque_atual + quantidade : Math.max(0, produto.estoque_atual - quantidade);
-    const { error: moveErr } = await supabase.from("movimentacoes_estoque").insert({
+    const { error: moveErr } = await supabase.from(tbl.movimentacoes as any).insert({
       user_id: user.id, produto_id: produto.id, tipo, quantidade,
       observacao: observacao || null, documento_ref: documento_ref || null,
     });
     if (moveErr) { toast.error("Erro ao registrar movimentação"); setSaving(false); return; }
-    const { error: updErr } = await supabase.from("produtos_estoque").update({ estoque_atual: novoEstoque }).eq("id", produto.id);
+    const { error: updErr } = await supabase.from(tbl.produtos as any).update({ estoque_atual: novoEstoque }).eq("id", produto.id);
     if (updErr) { toast.error("Erro ao atualizar estoque"); setSaving(false); return; }
     toast.success(`${tipo === "entrada" ? "Entrada" : "Saída"} registrada — Novo saldo: ${novoEstoque} ${produto.unidade}`);
     setQuickMove(null); setSaving(false); fetchAll();
@@ -357,12 +366,12 @@ export default function Estoque() {
     setSaving(true);
     const novoEstoque = Math.max(0, prod.estoque_atual - pend.quantidade);
     await Promise.all([
-      supabase.from("movimentacoes_estoque").insert({
+      supabase.from(tbl.movimentacoes as any).insert({
         user_id: user.id, produto_id: pend.produto_id, tipo: "saida",
         quantidade: pend.quantidade, observacao: "Baixa por bipagem",
       }),
-      supabase.from("produtos_estoque").update({ estoque_atual: novoEstoque }).eq("id", pend.produto_id),
-      supabase.from("pendentes_estoque").delete().eq("id", pend.id),
+      supabase.from(tbl.produtos as any).update({ estoque_atual: novoEstoque }).eq("id", pend.produto_id),
+      supabase.from(tbl.pendentes as any).delete().eq("id", pend.id),
     ]);
     toast.success(`Baixa: ${prod.nome} → ${novoEstoque} ${prod.unidade}`);
     setSaving(false);
@@ -370,7 +379,7 @@ export default function Estoque() {
   }
 
   async function rejectPendente(id: string) {
-    await supabase.from("pendentes_estoque").delete().eq("id", id);
+    await supabase.from(tbl.pendentes as any).delete().eq("id", id);
     toast.success("Removido da fila");
     fetchAll();
   }
@@ -383,12 +392,12 @@ export default function Estoque() {
       if (!prod) continue;
       const novoEstoque = Math.max(0, prod.estoque_atual - pend.quantidade);
       await Promise.all([
-        supabase.from("movimentacoes_estoque").insert({
+        supabase.from(tbl.movimentacoes as any).insert({
           user_id: user.id, produto_id: pend.produto_id, tipo: "saida",
           quantidade: pend.quantidade, observacao: "Baixa por bipagem",
         }),
-        supabase.from("produtos_estoque").update({ estoque_atual: novoEstoque }).eq("id", pend.produto_id),
-        supabase.from("pendentes_estoque").delete().eq("id", pend.id),
+        supabase.from(tbl.produtos as any).update({ estoque_atual: novoEstoque }).eq("id", pend.produto_id),
+        supabase.from(tbl.pendentes as any).delete().eq("id", pend.id),
       ]);
     }
     toast.success(`${pendentes.length} baixa(s) confirmada(s)`);
@@ -414,8 +423,8 @@ export default function Estoque() {
       local_estoque: formLocalEstoque.trim() || null,
     };
     let error;
-    if (editProduct) { ({ error } = await supabase.from("produtos_estoque").update(payload).eq("id", editProduct.id)); }
-    else { ({ error } = await supabase.from("produtos_estoque").insert(payload)); }
+    if (editProduct) { ({ error } = await supabase.from(tbl.produtos as any).update(payload).eq("id", editProduct.id)); }
+    else { ({ error } = await supabase.from(tbl.produtos as any).insert(payload)); }
     if (error) { toast.error(error.message.includes("unique") ? "Código de barras já cadastrado" : "Erro ao salvar produto"); setSaving(false); return; }
     toast.success(editProduct ? "Produto atualizado" : "Produto cadastrado");
     resetForm(); setSaving(false); fetchAll();
@@ -443,7 +452,7 @@ export default function Estoque() {
 
   async function handleDeleteProduct(p: Produto) {
     if (!confirm(`Tem certeza que deseja excluir "${p.nome}"? Esta ação não pode ser desfeita.`)) return;
-    const { error } = await supabase.from("produtos_estoque").delete().eq("id", p.id);
+    const { error } = await supabase.from(tbl.produtos as any).delete().eq("id", p.id);
     if (error) { toast.error("Erro ao excluir produto"); return; }
     setProdutos(prev => prev.filter(x => x.id !== p.id));
     toast.success("Produto excluído");
@@ -485,6 +494,18 @@ export default function Estoque() {
 
   return (
     <div className="space-y-5 pb-24">
+      {/* Estoque Source Segmented Control */}
+      <div className="segmented-control">
+        <button onClick={() => { setEstoqueSource("dsh"); setLoading(true); }}
+          className={`segmented-btn ${estoqueSource === "dsh" ? "active" : ""}`}>
+          Estoque DSH
+        </button>
+        <button onClick={() => { setEstoqueSource("dmedical"); setLoading(true); }}
+          className={`segmented-btn ${estoqueSource === "dmedical" ? "active" : ""}`}>
+          Estoque DMedical
+        </button>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
