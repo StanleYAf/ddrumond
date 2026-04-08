@@ -176,8 +176,14 @@ export default function Dashboard() {
         });
       }
     });
+    // Pós-venda: só alertar para clientes cadastrados nos últimos 15 dias e aguardando > 7 dias
+    const fifteenDaysAgo = new Date(now.getTime() - 15 * 86400000).toISOString().slice(0, 10);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000).toISOString().slice(0, 10);
-    const oldPending = data.pos_venda.filter(p => p.status === "Aguardando retorno" && p.data <= sevenDaysAgo);
+    const oldPending = data.pos_venda.filter(p =>
+      p.status === "Aguardando retorno" &&
+      p.data >= fifteenDaysAgo &&
+      p.data <= sevenDaysAgo
+    );
     if (oldPending.length > 0) {
       list.push({
         id: "pos-venda-old", icon: Clock,
@@ -185,20 +191,25 @@ export default function Dashboard() {
         color: "#FFD60A", route: "/pos-venda",
       });
     }
-    const currentMonthName = MESES[now.getMonth()];
-    const lastWeekIndicators = data.indicadores_semanais.filter(i => i.mes === currentMonthName && i.ano === now.getFullYear());
-    if (lastWeekIndicators.length > 0) {
-      const last = lastWeekIndicators[lastWeekIndicators.length - 1];
-      const missed: string[] = [];
-      if (last.captacoes < data.meta_semanal.captacoes) missed.push("Captações");
-      if (last.orcamentos < data.meta_semanal.orcamentos) missed.push("Orçamentos");
-      if (last.visitas < data.meta_semanal.visitas) missed.push("Visitas");
-      if (missed.length > 0) {
-        list.push({
-          id: "indicador-miss", icon: Target,
-          message: `Meta semanal não atingida: ${missed.join(", ")} (${last.vendedor}, S${last.semana})`,
-          color: "#FFD60A", route: "/indicadores",
-        });
+    // Meta semanal: usar a semana mais recente registrada (não apenas mês atual)
+    const sortedIndicators = [...data.indicadores_semanais].sort((a, b) => a.data.localeCompare(b.data));
+    if (sortedIndicators.length > 0) {
+      const last = sortedIndicators[sortedIndicators.length - 1];
+      // Só alertar se o indicador for das últimas 2 semanas
+      const indicatorDate = new Date(last.data);
+      const daysSinceIndicator = Math.floor((now.getTime() - indicatorDate.getTime()) / 86400000);
+      if (daysSinceIndicator <= 14) {
+        const missed: string[] = [];
+        if (last.captacoes < data.meta_semanal.captacoes) missed.push("Captações");
+        if (last.orcamentos < data.meta_semanal.orcamentos) missed.push("Orçamentos");
+        if (last.visitas < data.meta_semanal.visitas) missed.push("Visitas");
+        if (missed.length > 0) {
+          list.push({
+            id: "indicador-miss", icon: Target,
+            message: `Meta semanal não atingida: ${missed.join(", ")} (${last.vendedor}, S${last.semana})`,
+            color: "#FFD60A", route: "/indicadores",
+          });
+        }
       }
     }
     list.push(...stockAlerts);
