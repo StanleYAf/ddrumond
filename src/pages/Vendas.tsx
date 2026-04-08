@@ -267,6 +267,9 @@ export default function Vendas() {
   // Detail note
   const [newNote, setNewNote] = useState("");
 
+  // Vendedores
+  const [vendedores, setVendedores] = useState<{ id: string; nome: string }[]>([]);
+
   // ── Fetch ──
   const fetchLeads = useCallback(async () => {
     const { data, error } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
