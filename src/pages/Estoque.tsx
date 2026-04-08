@@ -146,6 +146,23 @@ export default function Estoque() {
   const belowMin = useMemo(() => produtos.filter(p => p.ativo && p.estoque_atual < p.estoque_minimo).length, [produtos]);
   const outOfStock = useMemo(() => produtos.filter(p => p.ativo && p.estoque_atual === 0), [produtos]);
 
+  // Expiry alerts
+  const expiringProducts = useMemo(() => {
+    const today = new Date();
+    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 86400000);
+    return produtos.filter(p => {
+      if (!p.ativo || !p.validade) return false;
+      const [y, m, d] = p.validade.split("-").map(Number);
+      const expDate = new Date(y, m - 1, d);
+      return expDate <= thirtyDaysFromNow;
+    }).map(p => {
+      const [y, m, d] = p.validade!.split("-").map(Number);
+      const expDate = new Date(y, m - 1, d);
+      const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / 86400000);
+      return { ...p, diffDays };
+    }).sort((a, b) => a.diffDays - b.diffDays);
+  }, [produtos]);
+
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     if (!q) return produtos.filter(p => p.ativo);
@@ -391,6 +408,10 @@ export default function Estoque() {
       preco_venda: formPrecoVenda ? parseFloat(formPrecoVenda) : null,
       numero_serie: formNumeroSerie.trim() || null,
       fornecedor_id: formFornecedor || null,
+      registro_anvisa: formRegistroAnvisa.trim() || null,
+      fabricante: formFabricante.trim() || null,
+      validade: formValidade || null,
+      local_estoque: formLocalEstoque.trim() || null,
     };
     let error;
     if (editProduct) { ({ error } = await supabase.from("produtos_estoque").update(payload).eq("id", editProduct.id)); }
@@ -405,6 +426,7 @@ export default function Estoque() {
     setFormNome(""); setFormCodigo(""); setFormCategoria(""); setFormUnidade("un");
     setFormEstoqueMin("1"); setFormEstoqueAtual("0"); setFormPrecoCusto(""); setFormPrecoVenda("");
     setFormNumeroSerie(""); setFormFornecedor("");
+    setFormRegistroAnvisa(""); setFormFabricante(""); setFormValidade(""); setFormLocalEstoque("");
   }
 
   function openEdit(p: Produto) {
@@ -414,6 +436,8 @@ export default function Estoque() {
     setFormPrecoCusto(p.preco_custo != null ? String(p.preco_custo) : "");
     setFormPrecoVenda(p.preco_venda != null ? String(p.preco_venda) : "");
     setFormNumeroSerie(p.numero_serie || ""); setFormFornecedor(p.fornecedor_id || "");
+    setFormRegistroAnvisa(p.registro_anvisa || ""); setFormFabricante(p.fabricante || "");
+    setFormValidade(p.validade || ""); setFormLocalEstoque(p.local_estoque || "");
     setShowForm(true);
   }
 
