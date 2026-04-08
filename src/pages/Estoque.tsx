@@ -1007,6 +1007,26 @@ export default function Estoque() {
                     <input value={formNumeroSerie} onChange={e => setFormNumeroSerie(e.target.value)} className="ios-input w-full" placeholder="Opcional" />
                   </div>
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Registro Anvisa</label>
+                    <input value={formRegistroAnvisa} onChange={e => setFormRegistroAnvisa(e.target.value)} className="ios-input w-full" placeholder="Nº registro" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Fabricante</label>
+                    <input value={formFabricante} onChange={e => setFormFabricante(e.target.value)} className="ios-input w-full" placeholder="Nome do fabricante" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Validade</label>
+                    <input type="date" value={formValidade} onChange={e => setFormValidade(e.target.value)} className="ios-input w-full" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Local de Estoque</label>
+                    <input value={formLocalEstoque} onChange={e => setFormLocalEstoque(e.target.value)} className="ios-input w-full" placeholder="Ex: Prateleira A" />
+                  </div>
+                </div>
                 <button type="submit" disabled={saving}
                   className="w-full h-12 rounded-xl text-base font-semibold text-foreground bg-primary disabled:opacity-50">
                   {saving ? "Salvando..." : editProduct ? "Salvar Alterações" : "Cadastrar Produto"}
