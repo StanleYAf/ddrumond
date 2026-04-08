@@ -265,7 +265,7 @@ export default function Estoque() {
       const trimmed = code.trim();
       const found = produtos.find(p => p.codigo_barras?.trim() === trimmed);
       if (found) {
-        const { error } = await supabase.from("pendentes_estoque").insert({
+        const { error } = await supabase.from(tbl.pendentes as any).insert({
           user_id: user.id, produto_id: found.id, quantidade: 1,
         });
         if (!error) {
@@ -348,12 +348,12 @@ export default function Estoque() {
     setSaving(true);
     const { produto, tipo, quantidade, observacao, documento_ref } = quickMove;
     const novoEstoque = tipo === "entrada" ? produto.estoque_atual + quantidade : Math.max(0, produto.estoque_atual - quantidade);
-    const { error: moveErr } = await supabase.from("movimentacoes_estoque").insert({
+    const { error: moveErr } = await supabase.from(tbl.movimentacoes as any).insert({
       user_id: user.id, produto_id: produto.id, tipo, quantidade,
       observacao: observacao || null, documento_ref: documento_ref || null,
     });
     if (moveErr) { toast.error("Erro ao registrar movimentação"); setSaving(false); return; }
-    const { error: updErr } = await supabase.from("produtos_estoque").update({ estoque_atual: novoEstoque }).eq("id", produto.id);
+    const { error: updErr } = await supabase.from(tbl.produtos as any).update({ estoque_atual: novoEstoque }).eq("id", produto.id);
     if (updErr) { toast.error("Erro ao atualizar estoque"); setSaving(false); return; }
     toast.success(`${tipo === "entrada" ? "Entrada" : "Saída"} registrada — Novo saldo: ${novoEstoque} ${produto.unidade}`);
     setQuickMove(null); setSaving(false); fetchAll();
@@ -366,12 +366,12 @@ export default function Estoque() {
     setSaving(true);
     const novoEstoque = Math.max(0, prod.estoque_atual - pend.quantidade);
     await Promise.all([
-      supabase.from("movimentacoes_estoque").insert({
+      supabase.from(tbl.movimentacoes as any).insert({
         user_id: user.id, produto_id: pend.produto_id, tipo: "saida",
         quantidade: pend.quantidade, observacao: "Baixa por bipagem",
       }),
-      supabase.from("produtos_estoque").update({ estoque_atual: novoEstoque }).eq("id", pend.produto_id),
-      supabase.from("pendentes_estoque").delete().eq("id", pend.id),
+      supabase.from(tbl.produtos as any).update({ estoque_atual: novoEstoque }).eq("id", pend.produto_id),
+      supabase.from(tbl.pendentes as any).delete().eq("id", pend.id),
     ]);
     toast.success(`Baixa: ${prod.nome} → ${novoEstoque} ${prod.unidade}`);
     setSaving(false);
@@ -379,7 +379,7 @@ export default function Estoque() {
   }
 
   async function rejectPendente(id: string) {
-    await supabase.from("pendentes_estoque").delete().eq("id", id);
+    await supabase.from(tbl.pendentes as any).delete().eq("id", id);
     toast.success("Removido da fila");
     fetchAll();
   }
@@ -392,12 +392,12 @@ export default function Estoque() {
       if (!prod) continue;
       const novoEstoque = Math.max(0, prod.estoque_atual - pend.quantidade);
       await Promise.all([
-        supabase.from("movimentacoes_estoque").insert({
+        supabase.from(tbl.movimentacoes as any).insert({
           user_id: user.id, produto_id: pend.produto_id, tipo: "saida",
           quantidade: pend.quantidade, observacao: "Baixa por bipagem",
         }),
-        supabase.from("produtos_estoque").update({ estoque_atual: novoEstoque }).eq("id", pend.produto_id),
-        supabase.from("pendentes_estoque").delete().eq("id", pend.id),
+        supabase.from(tbl.produtos as any).update({ estoque_atual: novoEstoque }).eq("id", pend.produto_id),
+        supabase.from(tbl.pendentes as any).delete().eq("id", pend.id),
       ]);
     }
     toast.success(`${pendentes.length} baixa(s) confirmada(s)`);
@@ -423,8 +423,8 @@ export default function Estoque() {
       local_estoque: formLocalEstoque.trim() || null,
     };
     let error;
-    if (editProduct) { ({ error } = await supabase.from("produtos_estoque").update(payload).eq("id", editProduct.id)); }
-    else { ({ error } = await supabase.from("produtos_estoque").insert(payload)); }
+    if (editProduct) { ({ error } = await supabase.from(tbl.produtos as any).update(payload).eq("id", editProduct.id)); }
+    else { ({ error } = await supabase.from(tbl.produtos as any).insert(payload)); }
     if (error) { toast.error(error.message.includes("unique") ? "Código de barras já cadastrado" : "Erro ao salvar produto"); setSaving(false); return; }
     toast.success(editProduct ? "Produto atualizado" : "Produto cadastrado");
     resetForm(); setSaving(false); fetchAll();
@@ -452,7 +452,7 @@ export default function Estoque() {
 
   async function handleDeleteProduct(p: Produto) {
     if (!confirm(`Tem certeza que deseja excluir "${p.nome}"? Esta ação não pode ser desfeita.`)) return;
-    const { error } = await supabase.from("produtos_estoque").delete().eq("id", p.id);
+    const { error } = await supabase.from(tbl.produtos as any).delete().eq("id", p.id);
     if (error) { toast.error("Erro ao excluir produto"); return; }
     setProdutos(prev => prev.filter(x => x.id !== p.id));
     toast.success("Produto excluído");
