@@ -494,6 +494,18 @@ export default function Estoque() {
 
   return (
     <div className="space-y-5 pb-24">
+      {/* Estoque Source Segmented Control */}
+      <div className="segmented-control">
+        <button onClick={() => { setEstoqueSource("dsh"); setLoading(true); }}
+          className={`segmented-btn ${estoqueSource === "dsh" ? "active" : ""}`}>
+          Estoque DSH
+        </button>
+        <button onClick={() => { setEstoqueSource("dmedical"); setLoading(true); }}
+          className={`segmented-btn ${estoqueSource === "dmedical" ? "active" : ""}`}>
+          Estoque DMedical
+        </button>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
