@@ -91,12 +91,13 @@ export default function Lancamentos() {
     const newItem: Lancamento = {
       id: crypto.randomUUID(), cliente: cliente.trim(), valor: parseCurrencyMask(valor), data: dataLanc,
       [CATEGORIA_FIELD[formCat]]: descricao.trim(),
+      tipo: tipo.trim() || undefined,
     };
     setData((prev) => ({
       ...prev,
       lancamentos: { ...prev.lancamentos, [CATEGORIA_ARRAY[formCat]]: [...prev.lancamentos[CATEGORIA_ARRAY[formCat]], newItem] },
     }));
-    setCliente(""); setDescricao(""); setValor(""); setShowForm(false);
+    setCliente(""); setDescricao(""); setTipo(""); setValor(""); setShowForm(false);
     toast.success("Lançamento adicionado com sucesso");
   }
 
@@ -104,6 +105,7 @@ export default function Lancamentos() {
     setEditItem(entry);
     setEditCliente(entry.cliente);
     setEditDescricao(getDescricao(entry));
+    setEditTipo(entry.tipo || "");
     setEditValor(numberToCurrencyMask(entry.valor));
     setEditData(entry.data);
     setEditErrors({});
@@ -121,7 +123,7 @@ export default function Lancamentos() {
       lancamentos: {
         ...prev.lancamentos,
         [arrKey]: prev.lancamentos[arrKey].map(l =>
-          l.id === editItem.id ? { ...l, cliente: editCliente.trim(), valor: parseCurrencyMask(editValor), data: editData, [fieldKey]: editDescricao.trim() } : l
+          l.id === editItem.id ? { ...l, cliente: editCliente.trim(), valor: parseCurrencyMask(editValor), data: editData, [fieldKey]: editDescricao.trim(), tipo: editTipo.trim() || undefined } : l
         ),
       },
     }));
