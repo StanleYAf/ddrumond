@@ -293,6 +293,63 @@ export type Database = {
           },
         ]
       }
+      movimentacoes_estoque_2: {
+        Row: {
+          cliente: string | null
+          created_at: string
+          documento_ref: string | null
+          id: string
+          motivo: string | null
+          observacao: string | null
+          produto_id: string
+          quantidade: number
+          tipo: string
+          user_id: string
+          vendedor_id: string | null
+        }
+        Insert: {
+          cliente?: string | null
+          created_at?: string
+          documento_ref?: string | null
+          id?: string
+          motivo?: string | null
+          observacao?: string | null
+          produto_id: string
+          quantidade: number
+          tipo: string
+          user_id: string
+          vendedor_id?: string | null
+        }
+        Update: {
+          cliente?: string | null
+          created_at?: string
+          documento_ref?: string | null
+          id?: string
+          motivo?: string | null
+          observacao?: string | null
+          produto_id?: string
+          quantidade?: number
+          tipo?: string
+          user_id?: string
+          vendedor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_estoque_2_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos_estoque_2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_estoque_2_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notas_contato: {
         Row: {
           created_at: string
@@ -356,6 +413,41 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "produtos_estoque"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pendentes_estoque_2: {
+        Row: {
+          created_at: string
+          id: string
+          produto_id: string
+          quantidade: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          produto_id: string
+          quantidade?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          produto_id?: string
+          quantidade?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pendentes_estoque_2_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos_estoque_2"
             referencedColumns: ["id"]
           },
         ]
@@ -469,6 +561,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      produtos_estoque_2: {
+        Row: {
+          ativo: boolean
+          categoria: string | null
+          codigo_barras: string | null
+          created_at: string
+          estoque_atual: number
+          estoque_minimo: number
+          fabricante: string | null
+          fornecedor_id: string | null
+          id: string
+          local_estoque: string | null
+          nome: string
+          numero_serie: string | null
+          preco_custo: number | null
+          preco_venda: number | null
+          registro_anvisa: string | null
+          unidade: string
+          updated_at: string
+          user_id: string
+          validade: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string | null
+          codigo_barras?: string | null
+          created_at?: string
+          estoque_atual?: number
+          estoque_minimo?: number
+          fabricante?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          local_estoque?: string | null
+          nome: string
+          numero_serie?: string | null
+          preco_custo?: number | null
+          preco_venda?: number | null
+          registro_anvisa?: string | null
+          unidade?: string
+          updated_at?: string
+          user_id: string
+          validade?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string | null
+          codigo_barras?: string | null
+          created_at?: string
+          estoque_atual?: number
+          estoque_minimo?: number
+          fabricante?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          local_estoque?: string | null
+          nome?: string
+          numero_serie?: string | null
+          preco_custo?: number | null
+          preco_venda?: number | null
+          registro_anvisa?: string | null
+          unidade?: string
+          updated_at?: string
+          user_id?: string
+          validade?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
