@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
 import {
   Package, Search, Camera, Plus, Pencil, ArrowDownToLine, ArrowUpFromLine,
   X, AlertTriangle, Barcode, Download, RotateCcw, Archive, TrendingUp,
-  Clock, Eye, Trash2,
+  Clock, Eye, Trash2, CalendarClock,
 } from "lucide-react";
 import { ListSkeleton } from "@/components/LoadingSkeleton";
 
@@ -24,6 +24,10 @@ interface Produto {
   fornecedor_id: string | null;
   numero_serie: string | null;
   ativo: boolean;
+  registro_anvisa: string | null;
+  fabricante: string | null;
+  validade: string | null;
+  local_estoque: string | null;
 }
 
 interface Movimentacao {
@@ -109,6 +113,10 @@ export default function Estoque() {
   const [formPrecoVenda, setFormPrecoVenda] = useState("");
   const [formNumeroSerie, setFormNumeroSerie] = useState("");
   const [formFornecedor, setFormFornecedor] = useState("");
+  const [formRegistroAnvisa, setFormRegistroAnvisa] = useState("");
+  const [formFabricante, setFormFabricante] = useState("");
+  const [formValidade, setFormValidade] = useState("");
+  const [formLocalEstoque, setFormLocalEstoque] = useState("");
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
@@ -137,6 +145,23 @@ export default function Estoque() {
   const vendedorMap = useMemo(() => new Map(vendedores.map(v => [v.id, v.nome])), [vendedores]);
   const belowMin = useMemo(() => produtos.filter(p => p.ativo && p.estoque_atual < p.estoque_minimo).length, [produtos]);
   const outOfStock = useMemo(() => produtos.filter(p => p.ativo && p.estoque_atual === 0), [produtos]);
+
+  // Expiry alerts
+  const expiringProducts = useMemo(() => {
+    const today = new Date();
+    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 86400000);
+    return produtos.filter(p => {
+      if (!p.ativo || !p.validade) return false;
+      const [y, m, d] = p.validade.split("-").map(Number);
+      const expDate = new Date(y, m - 1, d);
+      return expDate <= thirtyDaysFromNow;
+    }).map(p => {
+      const [y, m, d] = p.validade!.split("-").map(Number);
+      const expDate = new Date(y, m - 1, d);
+      const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / 86400000);
+      return { ...p, diffDays };
+    }).sort((a, b) => a.diffDays - b.diffDays);
+  }, [produtos]);
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -383,6 +408,10 @@ export default function Estoque() {
       preco_venda: formPrecoVenda ? parseFloat(formPrecoVenda) : null,
       numero_serie: formNumeroSerie.trim() || null,
       fornecedor_id: formFornecedor || null,
+      registro_anvisa: formRegistroAnvisa.trim() || null,
+      fabricante: formFabricante.trim() || null,
+      validade: formValidade || null,
+      local_estoque: formLocalEstoque.trim() || null,
     };
     let error;
     if (editProduct) { ({ error } = await supabase.from("produtos_estoque").update(payload).eq("id", editProduct.id)); }
@@ -397,6 +426,7 @@ export default function Estoque() {
     setFormNome(""); setFormCodigo(""); setFormCategoria(""); setFormUnidade("un");
     setFormEstoqueMin("1"); setFormEstoqueAtual("0"); setFormPrecoCusto(""); setFormPrecoVenda("");
     setFormNumeroSerie(""); setFormFornecedor("");
+    setFormRegistroAnvisa(""); setFormFabricante(""); setFormValidade(""); setFormLocalEstoque("");
   }
 
   function openEdit(p: Produto) {
@@ -406,6 +436,8 @@ export default function Estoque() {
     setFormPrecoCusto(p.preco_custo != null ? String(p.preco_custo) : "");
     setFormPrecoVenda(p.preco_venda != null ? String(p.preco_venda) : "");
     setFormNumeroSerie(p.numero_serie || ""); setFormFornecedor(p.fornecedor_id || "");
+    setFormRegistroAnvisa(p.registro_anvisa || ""); setFormFabricante(p.fabricante || "");
+    setFormValidade(p.validade || ""); setFormLocalEstoque(p.local_estoque || "");
     setShowForm(true);
   }
 
@@ -447,7 +479,7 @@ export default function Estoque() {
   const tabs: { key: TabKey; label: string; badge?: number }[] = [
     { key: "produtos", label: "Produtos", badge: totalSKUs },
     { key: "movimentacoes", label: "Movimentações" },
-    { key: "alertas", label: "Saúde", badge: belowMin + outOfStock.length > 0 ? belowMin + outOfStock.length : undefined },
+    { key: "alertas", label: "Saúde", badge: (belowMin + outOfStock.length + expiringProducts.length) > 0 ? belowMin + outOfStock.length + expiringProducts.length : undefined },
     { key: "aguardando", label: "Aguardando", badge: pendentes.length > 0 ? pendentes.length : undefined },
   ];
 
@@ -518,10 +550,22 @@ export default function Estoque() {
                           <span className="text-sm font-medium text-foreground truncate">{p.nome}</span>
                           {p.categoria && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground">{p.categoria}</span>}
                         </div>
-                        <div className="flex items-center gap-3 mt-0.5">
+                        <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                           {p.codigo_barras && <span className="text-[11px] text-muted-foreground flex items-center gap-0.5"><Barcode className="h-3 w-3" />{p.codigo_barras}</span>}
                           <span className="text-[11px] text-muted-foreground">Mín: {p.estoque_minimo}</span>
                           {p.preco_venda != null && <span className="text-[11px] text-muted-foreground">{formatCurrency(p.preco_venda)}</span>}
+                          {p.fabricante && <span className="text-[11px] text-muted-foreground">• {p.fabricante}</span>}
+                          {p.local_estoque && <span className="text-[11px] text-muted-foreground">📍 {p.local_estoque}</span>}
+                          {p.validade && (() => {
+                            const [y, m, d] = p.validade.split("-").map(Number);
+                            const expDate = new Date(y, m - 1, d);
+                            const diff = Math.ceil((expDate.getTime() - new Date().getTime()) / 86400000);
+                            if (diff <= 30) {
+                              const color = diff <= 0 ? '#FF453A' : diff <= 7 ? '#FF9500' : '#FFD60A';
+                              return <span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ color, background: `${color}15` }}>{diff <= 0 ? 'Vencido' : `Val: ${diff}d`}</span>;
+                            }
+                            return null;
+                          })()}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -724,6 +768,32 @@ export default function Estoque() {
             </div>
           )}
 
+          {/* Expiring products */}
+          {expiringProducts.length > 0 && (
+            <div className="glass-card p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <CalendarClock className="h-4 w-4" style={{ color: '#FF9500' }} />
+                <h3 className="text-sm font-semibold text-foreground">Validade próxima ou vencido ({expiringProducts.length})</h3>
+              </div>
+              {expiringProducts.map(p => {
+                const isExpired = p.diffDays <= 0;
+                const color = isExpired ? '#FF453A' : p.diffDays <= 7 ? '#FF9500' : '#FFD60A';
+                const label = isExpired ? 'Vencido' : `${p.diffDays} dia${p.diffDays !== 1 ? 's' : ''}`;
+                return (
+                  <button key={p.id} onClick={() => { setActiveTab("produtos"); setSearchQuery(p.nome); }}
+                    className="w-full text-left p-2 rounded-lg hover:bg-muted transition flex items-center justify-between"
+                    style={{ background: `${color}10`, border: `1px solid ${color}30` }}>
+                    <div>
+                      <span className="text-xs text-foreground">{p.nome}</span>
+                      {p.validade && <span className="text-[10px] text-muted-foreground ml-2">Val: {p.validade.split("-").reverse().join("/")}</span>}
+                    </div>
+                    <span className="text-[10px] font-bold" style={{ color }}>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {/* Top 10 chart */}
           {top10.length > 0 && (
             <div className="glass-card p-4">
@@ -740,7 +810,7 @@ export default function Estoque() {
             </div>
           )}
 
-          {belowMin === 0 && outOfStock.length === 0 && idleProducts.length === 0 && (
+          {belowMin === 0 && outOfStock.length === 0 && idleProducts.length === 0 && expiringProducts.length === 0 && (
             <div className="text-center py-12">
               <Package className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
               <p className="text-sm font-medium text-foreground">Estoque saudável!</p>
@@ -973,6 +1043,26 @@ export default function Estoque() {
                   <div>
                     <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Nº Série</label>
                     <input value={formNumeroSerie} onChange={e => setFormNumeroSerie(e.target.value)} className="ios-input w-full" placeholder="Opcional" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Registro Anvisa</label>
+                    <input value={formRegistroAnvisa} onChange={e => setFormRegistroAnvisa(e.target.value)} className="ios-input w-full" placeholder="Nº registro" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Fabricante</label>
+                    <input value={formFabricante} onChange={e => setFormFabricante(e.target.value)} className="ios-input w-full" placeholder="Nome do fabricante" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Validade</label>
+                    <input type="date" value={formValidade} onChange={e => setFormValidade(e.target.value)} className="ios-input w-full" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Local de Estoque</label>
+                    <input value={formLocalEstoque} onChange={e => setFormLocalEstoque(e.target.value)} className="ios-input w-full" placeholder="Ex: Prateleira A" />
                   </div>
                 </div>
                 <button type="submit" disabled={saving}
