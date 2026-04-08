@@ -550,10 +550,22 @@ export default function Estoque() {
                           <span className="text-sm font-medium text-foreground truncate">{p.nome}</span>
                           {p.categoria && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground">{p.categoria}</span>}
                         </div>
-                        <div className="flex items-center gap-3 mt-0.5">
+                        <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                           {p.codigo_barras && <span className="text-[11px] text-muted-foreground flex items-center gap-0.5"><Barcode className="h-3 w-3" />{p.codigo_barras}</span>}
                           <span className="text-[11px] text-muted-foreground">Mín: {p.estoque_minimo}</span>
                           {p.preco_venda != null && <span className="text-[11px] text-muted-foreground">{formatCurrency(p.preco_venda)}</span>}
+                          {p.fabricante && <span className="text-[11px] text-muted-foreground">• {p.fabricante}</span>}
+                          {p.local_estoque && <span className="text-[11px] text-muted-foreground">📍 {p.local_estoque}</span>}
+                          {p.validade && (() => {
+                            const [y, m, d] = p.validade.split("-").map(Number);
+                            const expDate = new Date(y, m - 1, d);
+                            const diff = Math.ceil((expDate.getTime() - new Date().getTime()) / 86400000);
+                            if (diff <= 30) {
+                              const color = diff <= 0 ? '#FF453A' : diff <= 7 ? '#FF9500' : '#FFD60A';
+                              return <span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ color, background: `${color}15` }}>{diff <= 0 ? 'Vencido' : `Val: ${diff}d`}</span>;
+                            }
+                            return null;
+                          })()}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
