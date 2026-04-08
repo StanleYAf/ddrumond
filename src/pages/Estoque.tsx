@@ -57,6 +57,12 @@ interface QuickMoveState {
 }
 
 type TabKey = "produtos" | "movimentacoes" | "alertas" | "aguardando";
+type EstoqueSource = "dsh" | "dmedical";
+
+const ESTOQUE_TABLES: Record<EstoqueSource, { produtos: string; movimentacoes: string; pendentes: string }> = {
+  dsh: { produtos: "produtos_estoque", movimentacoes: "movimentacoes_estoque", pendentes: "pendentes_estoque" },
+  dmedical: { produtos: "produtos_estoque_2", movimentacoes: "movimentacoes_estoque_2", pendentes: "pendentes_estoque_2" },
+};
 
 const TIPO_COLORS: Record<string, string> = {
   entrada: "#30D158",
@@ -79,6 +85,8 @@ export default function Estoque() {
   const [vendedores, setVendedores] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>("produtos");
+  const [estoqueSource, setEstoqueSource] = useState<EstoqueSource>("dsh");
+  const tbl = ESTOQUE_TABLES[estoqueSource];
   const [searchQuery, setSearchQuery] = useState("");
   const [quickMove, setQuickMove] = useState<QuickMoveState | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -120,23 +128,24 @@ export default function Estoque() {
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
+    const tables = ESTOQUE_TABLES[estoqueSource];
     const [prodRes, movRes, fornRes, vendRes, pendRes] = await Promise.all([
-      supabase.from("produtos_estoque").select("*").order("nome"),
-      supabase.from("movimentacoes_estoque").select("*").order("created_at", { ascending: false }),
+      supabase.from(tables.produtos as any).select("*").order("nome"),
+      supabase.from(tables.movimentacoes as any).select("*").order("created_at", { ascending: false }),
       supabase.from("fornecedores").select("id, nome").order("nome"),
       supabase.from("vendedores").select("id, nome").order("nome"),
-      supabase.from("pendentes_estoque").select("*").eq("status", "pendente").order("created_at", { ascending: false }),
+      supabase.from(tables.pendentes as any).select("*").eq("status", "pendente").order("created_at", { ascending: false }),
     ]);
-    if (prodRes.data) setProdutos(prodRes.data.map(d => ({
+    if (prodRes.data) setProdutos((prodRes.data as any[]).map(d => ({
       ...d, estoque_atual: Number(d.estoque_atual), estoque_minimo: Number(d.estoque_minimo),
       preco_custo: d.preco_custo ? Number(d.preco_custo) : null, preco_venda: d.preco_venda ? Number(d.preco_venda) : null,
     })));
-    if (movRes.data) setMovimentacoes(movRes.data.map(m => ({ ...m, quantidade: Number(m.quantidade) })));
+    if (movRes.data) setMovimentacoes((movRes.data as any[]).map(m => ({ ...m, quantidade: Number(m.quantidade) })));
     if (fornRes.data) setFornecedores(fornRes.data);
     if (vendRes.data) setVendedores(vendRes.data);
-    if (pendRes.data) setPendentes(pendRes.data.map(p => ({ ...p, quantidade: Number(p.quantidade) })));
+    if (pendRes.data) setPendentes((pendRes.data as any[]).map(p => ({ ...p, quantidade: Number(p.quantidade) })));
     setLoading(false);
-  }, [user]);
+  }, [user, estoqueSource]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
