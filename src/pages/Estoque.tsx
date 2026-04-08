@@ -479,7 +479,7 @@ export default function Estoque() {
   const tabs: { key: TabKey; label: string; badge?: number }[] = [
     { key: "produtos", label: "Produtos", badge: totalSKUs },
     { key: "movimentacoes", label: "Movimentações" },
-    { key: "alertas", label: "Saúde", badge: belowMin + outOfStock.length > 0 ? belowMin + outOfStock.length : undefined },
+    { key: "alertas", label: "Saúde", badge: (belowMin + outOfStock.length + expiringProducts.length) > 0 ? belowMin + outOfStock.length + expiringProducts.length : undefined },
     { key: "aguardando", label: "Aguardando", badge: pendentes.length > 0 ? pendentes.length : undefined },
   ];
 
