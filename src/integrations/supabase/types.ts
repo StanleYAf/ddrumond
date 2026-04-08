@@ -140,6 +140,54 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          created_at: string
+          email: string | null
+          empresa: string | null
+          etapa: Database["public"]["Enums"]["etapa_lead"]
+          id: string
+          nome_cliente: string
+          observacoes: string | null
+          origem: Database["public"]["Enums"]["origem_lead"]
+          responsavel: string | null
+          telefone: string
+          updated_at: string
+          user_id: string
+          valor_estimado: number | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          empresa?: string | null
+          etapa?: Database["public"]["Enums"]["etapa_lead"]
+          id?: string
+          nome_cliente: string
+          observacoes?: string | null
+          origem?: Database["public"]["Enums"]["origem_lead"]
+          responsavel?: string | null
+          telefone: string
+          updated_at?: string
+          user_id: string
+          valor_estimado?: number | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          empresa?: string | null
+          etapa?: Database["public"]["Enums"]["etapa_lead"]
+          id?: string
+          nome_cliente?: string
+          observacoes?: string | null
+          origem?: Database["public"]["Enums"]["origem_lead"]
+          responsavel?: string | null
+          telefone?: string
+          updated_at?: string
+          user_id?: string
+          valor_estimado?: number | null
+        }
+        Relationships: []
+      }
       metas_historicas: {
         Row: {
           ano: number
@@ -488,6 +536,20 @@ export type Database = {
     }
     Enums: {
       categoria_lancamento: "produto" | "servico" | "contrato" | "acessorio"
+      etapa_lead:
+        | "novo_lead"
+        | "primeiro_contato"
+        | "em_qualificacao"
+        | "convertido"
+        | "perdido"
+      origem_lead:
+        | "Instagram"
+        | "Facebook"
+        | "Indicação"
+        | "Site"
+        | "Google"
+        | "WhatsApp"
+        | "Outro"
       status_pos_venda: "Aguardando retorno" | "Contatado" | "Convertido"
     }
     CompositeTypes: {
@@ -617,6 +679,22 @@ export const Constants = {
   public: {
     Enums: {
       categoria_lancamento: ["produto", "servico", "contrato", "acessorio"],
+      etapa_lead: [
+        "novo_lead",
+        "primeiro_contato",
+        "em_qualificacao",
+        "convertido",
+        "perdido",
+      ],
+      origem_lead: [
+        "Instagram",
+        "Facebook",
+        "Indicação",
+        "Site",
+        "Google",
+        "WhatsApp",
+        "Outro",
+      ],
       status_pos_venda: ["Aguardando retorno", "Contatado", "Convertido"],
     },
   },
