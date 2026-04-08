@@ -109,7 +109,7 @@ function KanbanColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col min-w-[280px] w-[300px] rounded-xl border transition-colors ${
+      className={`flex flex-col flex-1 min-w-0 rounded-xl border transition-colors ${
         isOver ? "border-primary/60 bg-primary/5" : "border-border bg-card/30"
       }`}
     >
@@ -282,7 +282,11 @@ export default function Vendas() {
   // Fetch vendedores ativos
   useEffect(() => {
     supabase.from("vendedores").select("id, nome").eq("ativo", true).order("nome").then(({ data }) => {
-      if (data) setVendedores(data);
+      if (data) {
+        // Deduplicate by name
+        const unique = [...new Map(data.map((v) => [v.nome, v])).values()];
+        setVendedores(unique);
+      }
     });
   }, []);
 

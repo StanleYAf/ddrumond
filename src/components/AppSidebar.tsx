@@ -1,4 +1,4 @@
-import { LayoutDashboard, FilePlus, BarChart3, PhoneCall, Settings, LogOut, Package, Truck, Kanban } from "lucide-react";
+import { LayoutDashboard, FilePlus, BarChart3, PhoneCall, Settings, LogOut, Package, Kanban } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/authContext";
@@ -21,7 +21,6 @@ const allItems = [
   { title: "Vendas", url: "/vendas", icon: Kanban, group: "dash" },
   { title: "Pós-venda", url: "/pos-venda", icon: PhoneCall, group: "dash" },
   { title: "Estoque", url: "/estoque", icon: Package, group: "estoque" },
-  { title: "Fornecedores", url: "/fornecedores", icon: Truck, group: "estoque" },
   { title: "Configurações", url: "/configuracoes", icon: Settings, group: "always" },
 ];
 
