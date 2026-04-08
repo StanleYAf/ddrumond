@@ -276,6 +276,13 @@ export default function Vendas() {
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
+  // Fetch vendedores ativos
+  useEffect(() => {
+    supabase.from("vendedores").select("id, nome").eq("ativo", true).order("nome").then(({ data }) => {
+      if (data) setVendedores(data);
+    });
+  }, []);
+
   // Realtime
   useEffect(() => {
     const channel = supabase
@@ -523,7 +530,12 @@ export default function Vendas() {
             </div>
             <div>
               <Label>Responsável *</Label>
-              <Input value={form.responsavel} onChange={(e) => setForm({ ...form, responsavel: e.target.value })} />
+              <Select value={form.responsavel} onValueChange={(v) => setForm({ ...form, responsavel: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectContent>
+                  {vendedores.map((v) => <SelectItem key={v.id} value={v.nome}>{v.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Observações</Label>
