@@ -756,6 +756,32 @@ export default function Estoque() {
             </div>
           )}
 
+          {/* Expiring products */}
+          {expiringProducts.length > 0 && (
+            <div className="glass-card p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <CalendarClock className="h-4 w-4" style={{ color: '#FF9500' }} />
+                <h3 className="text-sm font-semibold text-foreground">Validade próxima ou vencido ({expiringProducts.length})</h3>
+              </div>
+              {expiringProducts.map(p => {
+                const isExpired = p.diffDays <= 0;
+                const color = isExpired ? '#FF453A' : p.diffDays <= 7 ? '#FF9500' : '#FFD60A';
+                const label = isExpired ? 'Vencido' : `${p.diffDays} dia${p.diffDays !== 1 ? 's' : ''}`;
+                return (
+                  <button key={p.id} onClick={() => { setActiveTab("produtos"); setSearchQuery(p.nome); }}
+                    className="w-full text-left p-2 rounded-lg hover:bg-muted transition flex items-center justify-between"
+                    style={{ background: `${color}10`, border: `1px solid ${color}30` }}>
+                    <div>
+                      <span className="text-xs text-foreground">{p.nome}</span>
+                      {p.validade && <span className="text-[10px] text-muted-foreground ml-2">Val: {p.validade.split("-").reverse().join("/")}</span>}
+                    </div>
+                    <span className="text-[10px] font-bold" style={{ color }}>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {/* Top 10 chart */}
           {top10.length > 0 && (
             <div className="glass-card p-4">
@@ -772,7 +798,7 @@ export default function Estoque() {
             </div>
           )}
 
-          {belowMin === 0 && outOfStock.length === 0 && idleProducts.length === 0 && (
+          {belowMin === 0 && outOfStock.length === 0 && idleProducts.length === 0 && expiringProducts.length === 0 && (
             <div className="text-center py-12">
               <Package className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
               <p className="text-sm font-medium text-foreground">Estoque saudável!</p>
