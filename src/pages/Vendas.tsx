@@ -155,11 +155,15 @@ function SortableLeadCard({
   onMoveTo: (e: Etapa) => void;
   onDelete: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: lead.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: lead.id,
+    data: { type: "lead", etapa: lead.etapa },
+  });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.3 : 1,
+    zIndex: isDragging ? 50 : undefined,
   };
 
   return (
@@ -451,7 +455,7 @@ export default function Vendas() {
 
       {/* Kanban Board */}
       <div className="flex-1 overflow-x-auto p-4">
-        <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex gap-4 min-w-min">
             {ETAPAS.map((etapa) => (
               <KanbanColumn
