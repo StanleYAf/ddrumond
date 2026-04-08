@@ -113,6 +113,10 @@ export default function Estoque() {
   const [formPrecoVenda, setFormPrecoVenda] = useState("");
   const [formNumeroSerie, setFormNumeroSerie] = useState("");
   const [formFornecedor, setFormFornecedor] = useState("");
+  const [formRegistroAnvisa, setFormRegistroAnvisa] = useState("");
+  const [formFabricante, setFormFabricante] = useState("");
+  const [formValidade, setFormValidade] = useState("");
+  const [formLocalEstoque, setFormLocalEstoque] = useState("");
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
