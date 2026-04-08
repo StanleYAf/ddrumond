@@ -8,13 +8,15 @@ import { ptBR } from "date-fns/locale";
 import {
   DndContext,
   DragOverlay,
-  closestCorners,
+  closestCenter,
+  pointerWithin,
+  rectIntersection,
   PointerSensor,
   useSensor,
   useSensors,
   type DragStartEvent,
   type DragEndEvent,
-  type DragOverEvent,
+  type CollisionDetection,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -153,11 +155,15 @@ function SortableLeadCard({
   onMoveTo: (e: Etapa) => void;
   onDelete: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: lead.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: lead.id,
+    data: { type: "lead", etapa: lead.etapa },
+  });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.3 : 1,
+    zIndex: isDragging ? 50 : undefined,
   };
 
   return (
@@ -376,23 +382,29 @@ export default function Vendas() {
 
     const leadId = active.id as string;
     const overId = over.id as string;
+    const lead = leads.find((l) => l.id === leadId);
+    if (!lead) return;
 
-    // Check if dropped on a column
-    const targetEtapa = ETAPAS.find((et) => et.key === overId);
-    if (targetEtapa) {
-      const lead = leads.find((l) => l.id === leadId);
-      if (lead && lead.etapa !== targetEtapa.key) {
-        await handleMoveTo(lead, targetEtapa.key);
+    // Determine target etapa: either the column itself or the column of the card we dropped on
+    let targetEtapa: Etapa | null = null;
+    const etapaMatch = ETAPAS.find((et) => et.key === overId);
+    if (etapaMatch) {
+      targetEtapa = etapaMatch.key;
+    } else {
+      // Dropped on a card — use that card's etapa
+      const targetLead = leads.find((l) => l.id === overId);
+      if (targetLead) {
+        targetEtapa = targetLead.etapa;
       }
-      return;
     }
 
-    // Dropped on another card — find its column
-    const targetLead = leads.find((l) => l.id === overId);
-    if (targetLead) {
-      const lead = leads.find((l) => l.id === leadId);
-      if (lead && lead.etapa !== targetLead.etapa) {
-        await handleMoveTo(lead, targetLead.etapa);
+    if (targetEtapa && lead.etapa !== targetEtapa) {
+      // Optimistic update
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, etapa: targetEtapa! } : l)));
+      const { error } = await supabase.from("leads").update({ etapa: targetEtapa as any }).eq("id", lead.id);
+      if (error) {
+        toast.error("Erro ao mover lead");
+        fetchLeads(); // revert
       }
     }
   };
@@ -449,7 +461,7 @@ export default function Vendas() {
 
       {/* Kanban Board */}
       <div className="flex-1 overflow-x-auto p-4">
-        <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex gap-4 min-w-min">
             {ETAPAS.map((etapa) => (
               <KanbanColumn
