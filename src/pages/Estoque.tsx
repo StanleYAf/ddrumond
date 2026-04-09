@@ -463,7 +463,7 @@ export default function Estoque() {
     setFormNome(""); setFormCodigo(""); setFormCategoria(""); setFormUnidade("un");
     setFormEstoqueMin("1"); setFormEstoqueAtual("0"); setFormPrecoCusto(""); setFormPrecoVenda("");
     setFormNumeroSerie(""); setFormFornecedor("");
-    setFormRegistroAnvisa(""); setFormFabricante(""); setFormValidade(""); setFormLocalEstoque("");
+    setFormRegistroAnvisa(""); setFormFabricante(""); setFormValidade(""); setFormValidadeIsento(false); setFormLocalEstoque("");
     setFormNomeComercial(""); setFormLote("");
   }
 
