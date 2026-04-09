@@ -1132,6 +1132,39 @@ export default function Estoque() {
                 <button onClick={resetForm}><X className="h-5 w-5 text-muted-foreground" /></button>
               </div>
               <form onSubmit={handleSaveProduct} className="space-y-3">
+                {/* Photo upload */}
+                <div>
+                  <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Foto do Produto</label>
+                  <div className="flex items-center gap-3">
+                    {formFotoPreview ? (
+                      <div className="relative">
+                        <img src={formFotoPreview} alt="Preview" className="w-16 h-16 rounded-xl object-cover border border-border" />
+                        <button type="button" onClick={() => { setFormFoto(null); setFormFotoPreview(null); }}
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button type="button" onClick={() => fotoInputRef.current?.click()}
+                        className="w-16 h-16 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 hover:border-primary hover:bg-primary/5 transition">
+                        <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-[9px] text-muted-foreground">Foto</span>
+                      </button>
+                    )}
+                    <input ref={fotoInputRef} type="file" accept="image/*" className="hidden"
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setFormFoto(file);
+                          setFormFotoPreview(URL.createObjectURL(file));
+                        }
+                        e.target.value = "";
+                      }} />
+                    {!formFotoPreview && (
+                      <p className="text-[11px] text-muted-foreground">Clique para adicionar uma foto</p>
+                    )}
+                  </div>
+                </div>
                 <div>
                   <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Nome *</label>
                   <input value={formNome} onChange={e => setFormNome(e.target.value)} className="ios-input w-full" placeholder="Nome do produto" required />
