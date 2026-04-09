@@ -82,7 +82,8 @@ const TIPO_LABELS: Record<string, string> = {
 };
 
 export default function Estoque() {
-  const { user } = useAuth();
+  const { user, cargo } = useAuth();
+  const canApprove = cargo === "admin" || cargo === "Controlador";
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
