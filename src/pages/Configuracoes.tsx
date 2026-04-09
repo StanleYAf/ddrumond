@@ -70,7 +70,7 @@ function UserRow({ u, user, savingUserId, onApprove, onRevoke, onReject, onCargo
       </div>
       {/* Cargo buttons - only show for approved users */}
       {u.aprovado && (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           {CARGOS.map(c => (
             <button key={c.value} onClick={() => onCargo(u.user_id, c.value)}
               disabled={savingUserId === u.user_id}
