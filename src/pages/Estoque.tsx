@@ -471,11 +471,12 @@ export default function Estoque() {
     setEditProduct(p); setFormNome(p.nome); setFormCodigo(p.codigo_barras || "");
     setFormCategoria(p.categoria || ""); setFormUnidade(p.unidade);
     setFormEstoqueMin(String(p.estoque_minimo)); setFormEstoqueAtual(String(p.estoque_atual));
-    setFormPrecoCusto(p.preco_custo != null ? String(p.preco_custo) : "");
-    setFormPrecoVenda(p.preco_venda != null ? String(p.preco_venda) : "");
+    setFormPrecoCusto(p.preco_custo != null ? numberToCurrencyMask(p.preco_custo) : "");
+    setFormPrecoVenda(p.preco_venda != null ? numberToCurrencyMask(p.preco_venda) : "");
     setFormNumeroSerie(p.numero_serie || ""); setFormFornecedor(p.fornecedor_id || "");
     setFormRegistroAnvisa(p.registro_anvisa || ""); setFormFabricante(p.fabricante || "");
-    setFormValidade(p.validade || ""); setFormLocalEstoque(p.local_estoque || "");
+    setFormValidade(p.validade || ""); setFormValidadeIsento(!p.validade && p.id ? true : false);
+    setFormLocalEstoque(p.local_estoque || "");
     setFormNomeComercial(p.nome_comercial || ""); setFormLote(p.lote || "");
     setShowForm(true);
   }
