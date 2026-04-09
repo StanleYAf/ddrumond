@@ -376,7 +376,7 @@ export default function Configuracoes() {
               <span className="text-sm text-foreground">Cargo</span>
             </div>
             <span className="text-sm font-medium text-muted-foreground">
-              {CARGOS.find(c => c.value === profileCargo)?.label || "Não definido"}
+              {profileCargo ? profileCargo.split(",").map(c => CARGOS.find(cc => cc.value === c.trim())?.label || c.trim()).join(", ") : "Não definido"}
             </span>
           </div>
           <div className="p-3">
