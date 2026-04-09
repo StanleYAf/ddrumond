@@ -473,6 +473,7 @@ export default function Estoque() {
     setFormNumeroSerie(p.numero_serie || ""); setFormFornecedor(p.fornecedor_id || "");
     setFormRegistroAnvisa(p.registro_anvisa || ""); setFormFabricante(p.fabricante || "");
     setFormValidade(p.validade || ""); setFormLocalEstoque(p.local_estoque || "");
+    setFormNomeComercial(p.nome_comercial || ""); setFormLote(p.lote || "");
     setShowForm(true);
   }
 
