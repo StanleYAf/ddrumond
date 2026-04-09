@@ -82,7 +82,8 @@ const TIPO_LABELS: Record<string, string> = {
 };
 
 export default function Estoque() {
-  const { user } = useAuth();
+  const { user, cargo } = useAuth();
+  const canApprove = cargo === "admin" || cargo === "Controlador";
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
@@ -933,24 +934,35 @@ export default function Estoque() {
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <span className="text-sm font-bold" style={{ color: '#FF453A' }}>-{pend.quantidade}</span>
-                        <button onClick={() => approvePendente(pend)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ background: '#30D158' }}>
-                          OK
-                        </button>
-                        <button onClick={() => rejectPendente(pend.id)}
-                          className="p-1.5 rounded-lg hover:bg-muted">
-                          <X className="h-3.5 w-3.5" style={{ color: '#FF453A' }} />
-                        </button>
+                        {canApprove && (
+                          <button onClick={() => approvePendente(pend)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ background: '#30D158' }}>
+                            OK
+                          </button>
+                        )}
+                        {canApprove && (
+                          <button onClick={() => rejectPendente(pend.id)}
+                            className="p-1.5 rounded-lg hover:bg-muted">
+                            <X className="h-3.5 w-3.5" style={{ color: '#FF453A' }} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
                 })}
               </div>
-              <button onClick={approveAll} disabled={saving}
-                className="w-full h-12 rounded-xl text-base font-semibold text-white disabled:opacity-50"
-                style={{ background: '#30D158' }}>
-                {saving ? "Processando..." : `Confirmar todas as baixas (${pendentes.length})`}
-              </button>
+              {canApprove && (
+                <button onClick={approveAll} disabled={saving}
+                  className="w-full h-12 rounded-xl text-base font-semibold text-white disabled:opacity-50"
+                  style={{ background: '#30D158' }}>
+                  {saving ? "Processando..." : `Confirmar todas as baixas (${pendentes.length})`}
+                </button>
+              )}
+              {!canApprove && (
+                <p className="text-center text-sm text-muted-foreground py-3">
+                  Aguardando aprovação de um Controlador ou Admin
+                </p>
+              )}
             </div>
           )}
         </>
