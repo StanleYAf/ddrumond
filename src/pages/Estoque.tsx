@@ -430,12 +430,28 @@ export default function Estoque() {
       fabricante: formFabricante.trim() || null,
       validade: formValidade || null,
       local_estoque: formLocalEstoque.trim() || null,
+      nome_comercial: formNomeComercial.trim() || null,
+      lote: formLote.trim() || null,
     };
     let error;
     if (editProduct) { ({ error } = await supabase.from(tbl.produtos as any).update(payload).eq("id", editProduct.id)); }
     else { ({ error } = await supabase.from(tbl.produtos as any).insert(payload)); }
     if (error) { toast.error(error.message.includes("unique") ? "Código de barras já cadastrado" : "Erro ao salvar produto"); setSaving(false); return; }
     toast.success(editProduct ? "Produto atualizado" : "Produto cadastrado");
+    // Auto-print label on new product creation
+    if (!editProduct) {
+      setLabelData({
+        produto: formNome.trim(),
+        nome_comercial: formNomeComercial.trim() || null,
+        fabricante: formFabricante.trim() || null,
+        lote: formLote.trim() || null,
+        registro_anvisa: formRegistroAnvisa.trim() || null,
+        validade: formValidade || null,
+        codigo_barras: formCodigo.trim() || null,
+        estoque: estoqueSource,
+      });
+      setTimeout(() => triggerPrint(), 300);
+    }
     resetForm(); setSaving(false); fetchAll();
   }
 
