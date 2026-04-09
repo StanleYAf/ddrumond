@@ -452,7 +452,7 @@ export default function Estoque() {
     const payload: any = {
       user_id: user.id, nome: formNome.trim(),
       codigo_barras: formSemCodigo
-        ? `INT${Date.now()}${Math.floor(Math.random() * 9000 + 1000)}`
+        ? (editProduct?.codigo_barras?.startsWith("INT") ? editProduct.codigo_barras : `INT${Date.now()}${Math.floor(Math.random() * 9000 + 1000)}`)
         : (formCodigo.trim() || null),
       categoria: formCategoria.trim() || null, unidade: formUnidade || "un",
       estoque_minimo: parseFloat(formEstoqueMin) || 1, estoque_atual: parseFloat(formEstoqueAtual) || 0,
@@ -697,7 +697,7 @@ export default function Estoque() {
                 {filtered.map(p => {
                   const isBelowMin = p.estoque_atual < p.estoque_minimo;
                   return (
-                    <div key={p.id} className="ios-list-item">
+                    <div key={p.id} className="ios-list-item gap-3">
                       {(() => {
                         const fotos = parseFotoUrls(p.foto_url);
                         return fotos.length > 0 ? (
