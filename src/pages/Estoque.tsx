@@ -425,6 +425,20 @@ export default function Estoque() {
     e.preventDefault();
     if (!user || !formNome.trim()) { toast.error("Nome é obrigatório"); return; }
     setSaving(true);
+
+    // Upload photo if selected
+    let fotoUrl: string | null = editProduct?.foto_url || null;
+    if (formFoto) {
+      const ext = formFoto.name.split(".").pop() || "jpg";
+      const filePath = `${user.id}/${Date.now()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from("product-photos").upload(filePath, formFoto);
+      if (uploadErr) {
+        toast.error("Erro ao enviar foto"); setSaving(false); return;
+      }
+      const { data: urlData } = supabase.storage.from("product-photos").getPublicUrl(filePath);
+      fotoUrl = urlData.publicUrl;
+    }
+
     const payload: any = {
       user_id: user.id, nome: formNome.trim(), codigo_barras: formCodigo.trim() || null,
       categoria: formCategoria.trim() || null, unidade: formUnidade || "un",
@@ -439,13 +453,13 @@ export default function Estoque() {
       local_estoque: formLocalEstoque.trim() || null,
       nome_comercial: formNomeComercial.trim() || null,
       lote: formLote.trim() || null,
+      foto_url: fotoUrl,
     };
     let error;
     if (editProduct) { ({ error } = await supabase.from(tbl.produtos as any).update(payload).eq("id", editProduct.id)); }
     else { ({ error } = await supabase.from(tbl.produtos as any).insert(payload)); }
     if (error) { toast.error(error.message.includes("unique") ? "Código de barras já cadastrado" : "Erro ao salvar produto"); setSaving(false); return; }
     toast.success(editProduct ? "Produto atualizado" : "Produto cadastrado");
-    // Auto-print label on new product creation
     if (!editProduct) {
       setLabelData({
         produto: formNome.trim(),
