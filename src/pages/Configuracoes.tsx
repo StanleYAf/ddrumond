@@ -162,15 +162,24 @@ export default function Configuracoes() {
       });
   }, [user, isAdmin]);
 
-  async function updateUserCargo(profileUserId: string, newCargo: string) {
+  async function toggleUserCargo(profileUserId: string, role: string) {
     setSavingUserId(profileUserId);
-    const { error } = await supabase.from("profiles").update({ cargo: newCargo || null }).eq("user_id", profileUserId);
+    const currentUser = allUsers.find(u => u.user_id === profileUserId);
+    const currentCargos = currentUser?.cargo ? currentUser.cargo.split(",").map(c => c.trim()) : [];
+    let newCargos: string[];
+    if (currentCargos.includes(role)) {
+      newCargos = currentCargos.filter(c => c !== role);
+    } else {
+      newCargos = [...currentCargos, role];
+    }
+    const newCargo = newCargos.length > 0 ? newCargos.join(",") : null;
+    const { error } = await supabase.from("profiles").update({ cargo: newCargo }).eq("user_id", profileUserId);
     if (error) {
       toast.error("Erro ao atualizar cargo");
     } else {
-      setAllUsers(prev => prev.map(u => u.user_id === profileUserId ? { ...u, cargo: newCargo || null } : u));
+      setAllUsers(prev => prev.map(u => u.user_id === profileUserId ? { ...u, cargo: newCargo } : u));
       if (profileUserId === user?.id) {
-        setProfileCargo(newCargo);
+        setProfileCargo(newCargo || "");
         await refreshProfile();
       }
       toast.success("Cargo atualizado");
