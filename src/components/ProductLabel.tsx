@@ -26,11 +26,12 @@ const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
     useEffect(() => {
       if (barcodeRef.current && data.codigo_barras) {
         try {
+          const isInternal = data.codigo_barras.startsWith("INT");
           JsBarcode(barcodeRef.current, data.codigo_barras, {
             format: "CODE128",
             width: 1.2,
             height: 24,
-            displayValue: true,
+            displayValue: !isInternal,
             fontSize: 8,
             font: "Arial",
             margin: 0,
@@ -113,9 +114,12 @@ const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
             marginTop: "0.5mm",
             flexShrink: 0,
             overflow: "hidden",
-            maxHeight: "12mm",
+            maxHeight: "14mm",
           }}>
             <svg ref={barcodeRef} style={{ maxWidth: "100%", height: "auto" }} />
+            {data.codigo_barras.startsWith("INT") && (
+              <div style={{ fontSize: "7pt", fontWeight: 700, color: "#FF0000", marginTop: "0.5mm" }}>USO INTERNO</div>
+            )}
           </div>
         )}
       </div>

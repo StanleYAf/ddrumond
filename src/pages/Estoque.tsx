@@ -120,6 +120,7 @@ export default function Estoque() {
   // Product form
   const [formNome, setFormNome] = useState("");
   const [formCodigo, setFormCodigo] = useState("");
+  const [formSemCodigo, setFormSemCodigo] = useState(false);
   const [formCategoria, setFormCategoria] = useState("");
   const [formUnidade, setFormUnidade] = useState("un");
   const [formEstoqueMin, setFormEstoqueMin] = useState("1");
@@ -449,7 +450,10 @@ export default function Estoque() {
     const fotoUrl = allUrls.length > 0 ? JSON.stringify(allUrls) : null;
 
     const payload: any = {
-      user_id: user.id, nome: formNome.trim(), codigo_barras: formCodigo.trim() || null,
+      user_id: user.id, nome: formNome.trim(),
+      codigo_barras: formSemCodigo
+        ? `INT${Date.now()}${Math.floor(Math.random() * 9000 + 1000)}`
+        : (formCodigo.trim() || null),
       categoria: formCategoria.trim() || null, unidade: formUnidade || "un",
       estoque_minimo: parseFloat(formEstoqueMin) || 1, estoque_atual: parseFloat(formEstoqueAtual) || 0,
       preco_custo: formPrecoCusto ? parseCurrencyMask(formPrecoCusto) : null,
@@ -470,6 +474,7 @@ export default function Estoque() {
     if (error) { toast.error(error.message.includes("unique") ? "Código de barras já cadastrado" : "Erro ao salvar produto"); setSaving(false); return; }
     toast.success(editProduct ? "Produto atualizado" : "Produto cadastrado");
     if (!editProduct) {
+      const savedCodigo = (payload as any).codigo_barras;
       setLabelData({
         produto: formNome.trim(),
         nome_comercial: formNomeComercial.trim() || null,
@@ -477,7 +482,7 @@ export default function Estoque() {
         lote: formLote.trim() || null,
         registro_anvisa: formRegistroAnvisa.trim() || null,
         validade: formValidade || null,
-        codigo_barras: formCodigo.trim() || null,
+        codigo_barras: savedCodigo,
         estoque: estoqueSource,
       });
       setTimeout(() => triggerPrint(), 300);
@@ -487,7 +492,7 @@ export default function Estoque() {
 
   function resetForm() {
     setShowForm(false); setEditProduct(null);
-    setFormNome(""); setFormCodigo(""); setFormCategoria(""); setFormUnidade("un");
+    setFormNome(""); setFormCodigo(""); setFormSemCodigo(false); setFormCategoria(""); setFormUnidade("un");
     setFormEstoqueMin("1"); setFormEstoqueAtual("0"); setFormPrecoCusto(""); setFormPrecoVenda("");
     setFormNumeroSerie(""); setFormFornecedor("");
     setFormRegistroAnvisa(""); setFormFabricante(""); setFormValidade(""); setFormValidadeIsento(false); setFormLocalEstoque("");
@@ -496,7 +501,7 @@ export default function Estoque() {
   }
 
   function openEdit(p: Produto) {
-    setEditProduct(p); setFormNome(p.nome); setFormCodigo(p.codigo_barras || "");
+    setEditProduct(p); setFormNome(p.nome); setFormCodigo(p.codigo_barras || ""); setFormSemCodigo(p.codigo_barras?.startsWith("INT") || false);
     setFormCategoria(p.categoria || ""); setFormUnidade(p.unidade);
     setFormEstoqueMin(String(p.estoque_minimo)); setFormEstoqueAtual(String(p.estoque_atual));
     setFormPrecoCusto(p.preco_custo != null ? numberToCurrencyMask(p.preco_custo) : "");
@@ -1194,7 +1199,12 @@ export default function Estoque() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Código de Barras</label>
-                    <input value={formCodigo} onChange={e => setFormCodigo(e.target.value)} className="ios-input w-full" placeholder="EAN" />
+                    <input value={formCodigo} onChange={e => setFormCodigo(e.target.value)} className="ios-input w-full" placeholder="EAN" disabled={formSemCodigo} />
+                    <label className="flex items-center gap-1.5 mt-1 cursor-pointer">
+                      <input type="checkbox" checked={formSemCodigo} onChange={e => { setFormSemCodigo(e.target.checked); if (e.target.checked) setFormCodigo(""); }}
+                        className="rounded border-border" />
+                      <span className="text-[10px] text-muted-foreground">Produto sem código de barras</span>
+                    </label>
                   </div>
                   <div>
                     <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Categoria</label>
