@@ -657,6 +657,7 @@ export default function Estoque() {
                           <Package className="h-5 w-5 text-muted-foreground" />
                         </div>
                       )}
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-foreground truncate">{p.nome}</span>
                           {p.categoria && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground">{p.categoria}</span>}
