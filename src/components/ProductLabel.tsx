@@ -32,7 +32,7 @@ const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
             width: 1.2,
             height: 24,
             displayValue: !isInternal,
-            fontSize: 8,
+            fontSize: 7,
             font: "Arial",
             margin: 0,
             textMargin: 1,
@@ -80,7 +80,7 @@ const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
             <img
               src={logo}
               alt={empresa}
-              style={{ height: "10mm", maxWidth: "20mm", objectFit: "contain" }}
+              style={{ height: "14mm", maxWidth: "28mm", objectFit: "contain" }}
               onError={() => setLogoError(true)}
             />
           ) : (
@@ -94,7 +94,7 @@ const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
           gridTemplateRows: "auto auto auto",
-          gap: "0.3mm 2mm",
+          gap: "0.2mm 2mm",
           flex: 1,
           minHeight: 0,
           overflow: "hidden",
@@ -122,6 +122,21 @@ const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
             )}
           </div>
         )}
+
+        {/* Footer — telefone */}
+        <div style={{
+          textAlign: "center",
+          fontSize: "6pt",
+          color: "#333",
+          borderTop: "0.5px solid #999",
+          paddingTop: "0.5mm",
+          marginTop: "0.5mm",
+          flexShrink: 0,
+        }}>
+          {data.estoque === "dmedical"
+            ? "Tel: (11) 0000-0000"
+            : "Tel: (11) 0000-0000"}
+        </div>
       </div>
     );
   }
