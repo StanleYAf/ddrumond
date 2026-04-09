@@ -33,6 +33,7 @@ interface Produto {
   local_estoque: string | null;
   nome_comercial: string | null;
   lote: string | null;
+  foto_url: string | null;
 }
 
 interface Movimentacao {
