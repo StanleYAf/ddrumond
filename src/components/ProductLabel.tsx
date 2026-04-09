@@ -54,8 +54,10 @@ const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
         overflow: "hidden",
       }}>
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: "2mm", marginBottom: "1mm", borderBottom: "0.3mm solid #ccc", paddingBottom: "1mm" }}>
-          <img src={logo} alt={empresa} style={{ height: "7mm", objectFit: "contain" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: "2mm", marginBottom: "1mm", borderBottom: "1px solid #000", paddingBottom: "1.5mm" }}>
+          <img src={logo} alt={empresa} style={{ height: "10mm", maxWidth: "20mm", objectFit: "contain" }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden-fallback"); }}
+          />
           <span style={{ fontSize: "8pt", fontWeight: 700 }}>{empresa}</span>
         </div>
 
