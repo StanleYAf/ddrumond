@@ -120,6 +120,7 @@ export default function Estoque() {
   // Product form
   const [formNome, setFormNome] = useState("");
   const [formCodigo, setFormCodigo] = useState("");
+  const [formSemCodigo, setFormSemCodigo] = useState(false);
   const [formCategoria, setFormCategoria] = useState("");
   const [formUnidade, setFormUnidade] = useState("un");
   const [formEstoqueMin, setFormEstoqueMin] = useState("1");
@@ -449,7 +450,10 @@ export default function Estoque() {
     const fotoUrl = allUrls.length > 0 ? JSON.stringify(allUrls) : null;
 
     const payload: any = {
-      user_id: user.id, nome: formNome.trim(), codigo_barras: formCodigo.trim() || null,
+      user_id: user.id, nome: formNome.trim(),
+      codigo_barras: formSemCodigo
+        ? `INT${Date.now()}${Math.floor(Math.random() * 9000 + 1000)}`
+        : (formCodigo.trim() || null),
       categoria: formCategoria.trim() || null, unidade: formUnidade || "un",
       estoque_minimo: parseFloat(formEstoqueMin) || 1, estoque_atual: parseFloat(formEstoqueAtual) || 0,
       preco_custo: formPrecoCusto ? parseCurrencyMask(formPrecoCusto) : null,
