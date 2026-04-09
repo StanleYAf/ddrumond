@@ -432,6 +432,7 @@ export default function Estoque() {
   async function handleSaveProduct(e: React.FormEvent) {
     e.preventDefault();
     if (!user || !formNome.trim()) { toast.error("Nome é obrigatório"); return; }
+    if (saving) return; // Prevent double submit
     setSaving(true);
 
     // Upload new photos and merge with existing previews (URLs)
@@ -450,7 +451,7 @@ export default function Estoque() {
     const fotoUrl = allUrls.length > 0 ? JSON.stringify(allUrls) : null;
 
     const payload: any = {
-      user_id: user.id, nome: formNome.trim(),
+      nome: formNome.trim(),
       codigo_barras: formSemCodigo
         ? (editProduct?.codigo_barras?.startsWith("INT") ? editProduct.codigo_barras : `INT${Date.now()}${Math.floor(Math.random() * 9000 + 1000)}`)
         : (formCodigo.trim() || null),
@@ -468,9 +469,16 @@ export default function Estoque() {
       lote: formLote.trim() || null,
       foto_url: fotoUrl,
     };
+
     let error;
-    if (editProduct) { ({ error } = await supabase.from(tbl.produtos as any).update(payload).eq("id", editProduct.id)); }
-    else { ({ error } = await supabase.from(tbl.produtos as any).insert(payload)); }
+    if (editProduct) {
+      // Don't overwrite user_id on edit — preserve original owner
+      ({ error } = await supabase.from(tbl.produtos as any).update(payload).eq("id", editProduct.id));
+    } else {
+      // Only set user_id on new products
+      payload.user_id = user.id;
+      ({ error } = await supabase.from(tbl.produtos as any).insert(payload));
+    }
     if (error) { toast.error(error.message.includes("unique") ? "Código de barras já cadastrado" : "Erro ao salvar produto"); setSaving(false); return; }
     toast.success(editProduct ? "Produto atualizado" : "Produto cadastrado");
     if (!editProduct) {
