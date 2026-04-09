@@ -129,7 +129,12 @@ export default function Estoque() {
   const [formFabricante, setFormFabricante] = useState("");
   const [formValidade, setFormValidade] = useState("");
   const [formLocalEstoque, setFormLocalEstoque] = useState("");
+  const [formNomeComercial, setFormNomeComercial] = useState("");
+  const [formLote, setFormLote] = useState("");
 
+  // Label printing
+  const { labelRef, triggerPrint } = useLabelPrint();
+  const [labelData, setLabelData] = useState<ProductLabelData | null>(null);
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const tables = ESTOQUE_TABLES[estoqueSource];
