@@ -23,10 +23,10 @@ const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
         try {
           JsBarcode(barcodeRef.current, data.codigo_barras, {
             format: "CODE128",
-            width: 1.5,
+            width: 1.2,
             height: 28,
             displayValue: true,
-            fontSize: 9,
+            fontSize: 8,
             font: "Arial",
             margin: 2,
           });
@@ -47,8 +47,8 @@ const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
 
     return (
       <div ref={ref} style={{
-        width: "100mm", height: "50mm", padding: "2mm 3mm",
-        fontFamily: "Arial, sans-serif", fontSize: "7pt", color: "#000",
+        width: "100mm", height: "50mm", padding: "2mm",
+        fontFamily: "Arial, sans-serif", fontSize: "6.5pt", color: "#000",
         background: "#fff", boxSizing: "border-box", display: "flex",
         flexDirection: "column", justifyContent: "space-between",
         overflow: "hidden",
@@ -62,7 +62,7 @@ const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
         {/* Data grid */}
         <div style={{
           display: "grid", gridTemplateColumns: "1fr 1fr",
-          gap: "0.5mm 3mm", flex: 1,
+          gap: "0.3mm 2mm", flex: 1, fontSize: "6.5pt",
         }}>
           <Field label="Produto" value={data.produto} />
           <Field label="Nome Comercial" value={data.nome_comercial} />
@@ -87,10 +87,9 @@ ProductLabel.displayName = "ProductLabel";
 
 function Field({ label, value }: { label: string; value?: string | null }) {
   return (
-    <div>
-      <span style={{ fontSize: "5.5pt", color: "#666", fontWeight: 600 }}>{label}</span>
-      <br />
-      <span style={{ fontSize: "7pt", fontWeight: 500 }}>{value || "—"}</span>
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <span style={{ fontSize: "6.5pt", color: "#333", fontWeight: 700, textTransform: "uppercase" as const }}>{label}</span>
+      <span style={{ fontSize: "7.5pt", fontWeight: 500, color: "#000" }}>{value || "—"}</span>
     </div>
   );
 }
