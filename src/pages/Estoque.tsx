@@ -641,7 +641,7 @@ export default function Estoque() {
                           {p.preco_venda != null && <span className="text-[11px] text-muted-foreground">{formatCurrency(p.preco_venda)}</span>}
                           {p.fabricante && <span className="text-[11px] text-muted-foreground">• {p.fabricante}</span>}
                           {p.local_estoque && <span className="text-[11px] text-muted-foreground">📍 {p.local_estoque}</span>}
-                          {p.validade && (() => {
+                          {p.validade ? (() => {
                             const [y, m, d] = p.validade.split("-").map(Number);
                             const expDate = new Date(y, m - 1, d);
                             const diff = Math.ceil((expDate.getTime() - new Date().getTime()) / 86400000);
@@ -650,7 +650,7 @@ export default function Estoque() {
                               return <span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ color, background: `${color}15` }}>{diff <= 0 ? 'Vencido' : `Val: ${diff}d`}</span>;
                             }
                             return null;
-                          })()}
+                          })() : <span className="text-[10px] px-1 py-0.5 rounded bg-secondary text-muted-foreground">Isento</span>}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
