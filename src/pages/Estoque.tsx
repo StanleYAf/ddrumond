@@ -677,9 +677,14 @@ export default function Estoque() {
             <div className="flex items-center justify-between mb-1">
               <p className="ios-section-title mb-0">PRODUTOS ({filtered.length})</p>
               {filtered.length > 0 && (
-                <button onClick={exportInventarioCSV} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary text-foreground hover:bg-muted transition">
-                  <Download className="h-3.5 w-3.5" />Inventário CSV
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button onClick={exportInventarioCSV} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary text-foreground hover:bg-muted transition">
+                    <Download className="h-3.5 w-3.5" />CSV
+                  </button>
+                  <button onClick={exportInventarioXLSX} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary text-foreground hover:bg-muted transition">
+                    <Download className="h-3.5 w-3.5" />XLSX
+                  </button>
+                </div>
               )}
             </div>
             {filtered.length === 0 ? (
