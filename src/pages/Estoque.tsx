@@ -8,7 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
 import {
   Package, Search, Camera, Plus, Pencil, ArrowDownToLine, ArrowUpFromLine,
   X, AlertTriangle, Barcode, Download, RotateCcw, Archive, TrendingUp,
-  Clock, Eye, Trash2, CalendarClock, Printer,
+  Clock, Eye, Trash2, CalendarClock, Printer, ImagePlus,
 } from "lucide-react";
 import { ListSkeleton } from "@/components/LoadingSkeleton";
 import ProductLabel, { type ProductLabelData } from "@/components/ProductLabel";
@@ -33,6 +33,7 @@ interface Produto {
   local_estoque: string | null;
   nome_comercial: string | null;
   lote: string | null;
+  foto_url: string | null;
 }
 
 interface Movimentacao {
@@ -134,6 +135,9 @@ export default function Estoque() {
   const [formLocalEstoque, setFormLocalEstoque] = useState("");
   const [formNomeComercial, setFormNomeComercial] = useState("");
   const [formLote, setFormLote] = useState("");
+  const [formFoto, setFormFoto] = useState<File | null>(null);
+  const [formFotoPreview, setFormFotoPreview] = useState<string | null>(null);
+  const fotoInputRef = useRef<HTMLInputElement>(null);
 
   // Label printing
   const { labelRef, triggerPrint } = useLabelPrint();
@@ -421,6 +425,20 @@ export default function Estoque() {
     e.preventDefault();
     if (!user || !formNome.trim()) { toast.error("Nome é obrigatório"); return; }
     setSaving(true);
+
+    // Upload photo if selected
+    let fotoUrl: string | null = editProduct?.foto_url || null;
+    if (formFoto) {
+      const ext = formFoto.name.split(".").pop() || "jpg";
+      const filePath = `${user.id}/${Date.now()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from("product-photos").upload(filePath, formFoto);
+      if (uploadErr) {
+        toast.error("Erro ao enviar foto"); setSaving(false); return;
+      }
+      const { data: urlData } = supabase.storage.from("product-photos").getPublicUrl(filePath);
+      fotoUrl = urlData.publicUrl;
+    }
+
     const payload: any = {
       user_id: user.id, nome: formNome.trim(), codigo_barras: formCodigo.trim() || null,
       categoria: formCategoria.trim() || null, unidade: formUnidade || "un",
@@ -435,13 +453,13 @@ export default function Estoque() {
       local_estoque: formLocalEstoque.trim() || null,
       nome_comercial: formNomeComercial.trim() || null,
       lote: formLote.trim() || null,
+      foto_url: fotoUrl,
     };
     let error;
     if (editProduct) { ({ error } = await supabase.from(tbl.produtos as any).update(payload).eq("id", editProduct.id)); }
     else { ({ error } = await supabase.from(tbl.produtos as any).insert(payload)); }
     if (error) { toast.error(error.message.includes("unique") ? "Código de barras já cadastrado" : "Erro ao salvar produto"); setSaving(false); return; }
     toast.success(editProduct ? "Produto atualizado" : "Produto cadastrado");
-    // Auto-print label on new product creation
     if (!editProduct) {
       setLabelData({
         produto: formNome.trim(),
@@ -465,6 +483,7 @@ export default function Estoque() {
     setFormNumeroSerie(""); setFormFornecedor("");
     setFormRegistroAnvisa(""); setFormFabricante(""); setFormValidade(""); setFormValidadeIsento(false); setFormLocalEstoque("");
     setFormNomeComercial(""); setFormLote("");
+    setFormFoto(null); setFormFotoPreview(null);
   }
 
   function openEdit(p: Produto) {
@@ -478,6 +497,7 @@ export default function Estoque() {
     setFormValidade(p.validade || ""); setFormValidadeIsento(!p.validade && p.id ? true : false);
     setFormLocalEstoque(p.local_estoque || "");
     setFormNomeComercial(p.nome_comercial || ""); setFormLote(p.lote || "");
+    setFormFoto(null); setFormFotoPreview(p.foto_url || null);
     setShowForm(true);
   }
 
@@ -630,6 +650,13 @@ export default function Estoque() {
                   const isBelowMin = p.estoque_atual < p.estoque_minimo;
                   return (
                     <div key={p.id} className="ios-list-item">
+                      {p.foto_url ? (
+                        <img src={p.foto_url} alt={p.nome} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
+                          <Package className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-foreground truncate">{p.nome}</span>
@@ -1105,6 +1132,39 @@ export default function Estoque() {
                 <button onClick={resetForm}><X className="h-5 w-5 text-muted-foreground" /></button>
               </div>
               <form onSubmit={handleSaveProduct} className="space-y-3">
+                {/* Photo upload */}
+                <div>
+                  <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Foto do Produto</label>
+                  <div className="flex items-center gap-3">
+                    {formFotoPreview ? (
+                      <div className="relative">
+                        <img src={formFotoPreview} alt="Preview" className="w-16 h-16 rounded-xl object-cover border border-border" />
+                        <button type="button" onClick={() => { setFormFoto(null); setFormFotoPreview(null); }}
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button type="button" onClick={() => fotoInputRef.current?.click()}
+                        className="w-16 h-16 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 hover:border-primary hover:bg-primary/5 transition">
+                        <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-[9px] text-muted-foreground">Foto</span>
+                      </button>
+                    )}
+                    <input ref={fotoInputRef} type="file" accept="image/*" className="hidden"
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setFormFoto(file);
+                          setFormFotoPreview(URL.createObjectURL(file));
+                        }
+                        e.target.value = "";
+                      }} />
+                    {!formFotoPreview && (
+                      <p className="text-[11px] text-muted-foreground">Clique para adicionar uma foto</p>
+                    )}
+                  </div>
+                </div>
                 <div>
                   <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Nome *</label>
                   <input value={formNome} onChange={e => setFormNome(e.target.value)} className="ios-input w-full" placeholder="Nome do produto" required />

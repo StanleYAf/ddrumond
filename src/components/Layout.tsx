@@ -36,23 +36,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Desktop Sidebar */}
       <aside className={`hidden md:flex flex-col fixed inset-y-0 left-0 z-40 border-r border-border bg-sidebar transition-all duration-200 ${collapsed ? 'w-16' : 'w-60'}`}
         style={{ backdropFilter: 'blur(20px)' }}>
-        <div className={`p-5 pb-3 flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
+        <div className={`p-4 pb-3 flex items-center ${collapsed ? 'flex-col gap-2 px-2' : 'justify-between'}`}>
           {!collapsed && (
             <div>
               <h1 className="text-lg font-semibold text-foreground tracking-tight">Painel Comercial</h1>
               <p className="text-xs mt-0.5 text-muted-foreground">Equipamentos Médicos</p>
             </div>
           )}
-          <div className={`flex items-center ${collapsed ? '' : 'gap-1'}`}>
-            {!collapsed && (
-              <button onClick={toggleMode}
-                className="p-2 rounded-xl transition-colors bg-secondary hover:bg-secondary/80">
-                {isDark ? <Sun className="h-4 w-4 text-warning" /> : <Moon className="h-4 w-4 text-muted-foreground" />}
-              </button>
-            )}
+          <div className={`flex items-center ${collapsed ? 'flex-col gap-2' : 'gap-2'}`}>
+            {/* Dark/Light toggle - pill style */}
+            <button onClick={toggleMode}
+              className="relative w-10 h-[22px] rounded-full transition-colors duration-300"
+              style={{ background: isDark ? 'hsl(var(--primary) / 0.2)' : 'hsl(var(--muted))' }}
+              title={isDark ? "Modo claro" : "Modo escuro"}>
+              <span className="absolute top-[2px] transition-all duration-300 flex items-center justify-center w-[18px] h-[18px] rounded-full bg-white shadow-sm"
+                style={{ left: isDark ? '20px' : '2px' }}>
+                {isDark ? <Sun className="h-3 w-3 text-amber-500" /> : <Moon className="h-3 w-3 text-slate-500" />}
+              </span>
+            </button>
+            {/* Sidebar collapse toggle - pill style */}
             <button onClick={() => setCollapsed(!collapsed)}
-              className="p-2 rounded-xl transition-colors hover:bg-secondary" title={collapsed ? "Expandir" : "Recolher"}>
-              {collapsed ? <PanelLeft className="h-4 w-4 text-muted-foreground" /> : <PanelLeftClose className="h-4 w-4 text-muted-foreground" />}
+              className="relative w-10 h-[22px] rounded-full transition-colors duration-300"
+              style={{ background: collapsed ? 'hsl(var(--primary) / 0.2)' : 'hsl(var(--muted))' }}
+              title={collapsed ? "Expandir sidebar" : "Recolher sidebar"}>
+              <span className="absolute top-[2px] transition-all duration-300 flex items-center justify-center w-[18px] h-[18px] rounded-full bg-white shadow-sm"
+                style={{ left: collapsed ? '20px' : '2px' }}>
+                {collapsed ? <PanelLeft className="h-3 w-3 text-primary" /> : <PanelLeftClose className="h-3 w-3 text-slate-500" />}
+              </span>
             </button>
           </div>
         </div>
