@@ -509,6 +509,32 @@ export default function Estoque() {
     toast.success("CSV exportado");
   }
 
+  function exportInventarioCSV() {
+    const ativos = produtos.filter(p => p.ativo);
+    const rows = ativos.map(p => {
+      const forn = fornecedores.find(f => f.id === p.fornecedor_id);
+      return [
+        p.nome, p.nome_comercial || "", p.codigo_barras || "", p.categoria || "",
+        p.fabricante || "", p.lote || "", p.registro_anvisa || "",
+        p.validade ? p.validade.split("-").reverse().join("/") : "Isento",
+        p.local_estoque || "", p.estoque_atual, p.estoque_minimo, p.unidade,
+        p.preco_custo != null ? p.preco_custo.toFixed(2).replace(".", ",") : "",
+        p.preco_venda != null ? p.preco_venda.toFixed(2).replace(".", ",") : "",
+        p.preco_venda != null ? (p.estoque_atual * p.preco_venda).toFixed(2).replace(".", ",") : "",
+        forn?.nome || "", p.numero_serie || "",
+      ].map(v => `"${v}"`).join(",");
+    });
+    const header = "Nome,Nome Comercial,Código Barras,Categoria,Fabricante,Lote,Registro ANVISA,Validade,Local,Estoque Atual,Estoque Mín.,Unidade,Preço Custo,Preço Venda,Valor Total Venda,Fornecedor,Nº Série";
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url;
+    const srcLabel = estoqueSource === "dsh" ? "DSH" : "DMedical";
+    a.download = `inventario_${srcLabel}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    toast.success("Relatório de inventário exportado");
+  }
+
   function formatDateTime(iso: string) {
     const d = new Date(iso);
     return `${d.toLocaleDateString("pt-BR")} ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
