@@ -98,7 +98,7 @@ function UserRow({ u, user, savingUserId, onApprove, onRevoke, onReject, onToggl
 
 export default function Configuracoes() {
   const { data, setData, loading, error, undoDelete } = useAppData();
-  const { user, refreshProfile, cargo: currentCargo, displayName: currentDisplayName } = useAuth();
+  const { user, refreshProfile, cargo: currentCargo, displayName: currentDisplayName, hasCargo } = useAuth();
   const { mode, accent, setMode, setAccent, toggleMode } = useTheme();
   const [novoVendedor, setNovoVendedor] = useState("");
   const [vendedoresStatus, setVendedoresStatus] = useState<{nome: string; ativo: boolean}[]>([]);
