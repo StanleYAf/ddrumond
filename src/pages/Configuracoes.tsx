@@ -13,6 +13,7 @@ import { toast } from "sonner";
 const CARGOS = [
   { value: "dash", label: "Dash", desc: "Dashboard, lançamentos, indicadores e pós-venda" },
   { value: "estoque", label: "Estoque", desc: "Estoque e fornecedores" },
+  { value: "Controlador", label: "Controlador", desc: "Estoque com aprovação de saídas" },
   { value: "admin", label: "Admin", desc: "Acesso completo" },
 ];
 

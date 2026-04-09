@@ -34,7 +34,7 @@ export function AppSidebar() {
     if (item.group === "always") return true;
     if (!cargo || cargo === "admin") return true;
     if (cargo === "dash") return item.group === "dash";
-    if (cargo === "estoque") return item.group === "estoque";
+    if (cargo === "estoque" || cargo === "Controlador") return item.group === "estoque";
     return false;
   });
 
