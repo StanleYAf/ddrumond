@@ -1198,6 +1198,13 @@ export default function Estoque() {
           </button>
         </>
       )}
+
+      {/* Hidden label for printing */}
+      {labelData && (
+        <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+          <ProductLabel ref={labelRef} data={labelData} />
+        </div>
+      )}
     </div>
   );
 }
