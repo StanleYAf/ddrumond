@@ -135,6 +135,9 @@ export default function Estoque() {
   const [formLocalEstoque, setFormLocalEstoque] = useState("");
   const [formNomeComercial, setFormNomeComercial] = useState("");
   const [formLote, setFormLote] = useState("");
+  const [formFoto, setFormFoto] = useState<File | null>(null);
+  const [formFotoPreview, setFormFotoPreview] = useState<string | null>(null);
+  const fotoInputRef = useRef<HTMLInputElement>(null);
 
   // Label printing
   const { labelRef, triggerPrint } = useLabelPrint();
