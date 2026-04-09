@@ -433,18 +433,20 @@ export default function Estoque() {
     if (!user || !formNome.trim()) { toast.error("Nome é obrigatório"); return; }
     setSaving(true);
 
-    // Upload photo if selected
-    let fotoUrl: string | null = editProduct?.foto_url || null;
-    if (formFoto) {
-      const ext = formFoto.name.split(".").pop() || "jpg";
-      const filePath = `${user.id}/${Date.now()}.${ext}`;
-      const { error: uploadErr } = await supabase.storage.from("product-photos").upload(filePath, formFoto);
-      if (uploadErr) {
-        toast.error("Erro ao enviar foto"); setSaving(false); return;
-      }
+    // Upload new photos and merge with existing previews (URLs)
+    const existingUrls = formFotoPreviews.filter(p => p.startsWith("http"));
+    const newFiles = formFotos;
+    const uploadedUrls: string[] = [];
+    for (const file of newFiles) {
+      const ext = file.name.split(".").pop() || "jpg";
+      const filePath = `${user.id}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from("product-photos").upload(filePath, file);
+      if (uploadErr) { toast.error("Erro ao enviar foto"); setSaving(false); return; }
       const { data: urlData } = supabase.storage.from("product-photos").getPublicUrl(filePath);
-      fotoUrl = urlData.publicUrl;
+      uploadedUrls.push(urlData.publicUrl);
     }
+    const allUrls = [...existingUrls, ...uploadedUrls];
+    const fotoUrl = allUrls.length > 0 ? JSON.stringify(allUrls) : null;
 
     const payload: any = {
       user_id: user.id, nome: formNome.trim(), codigo_barras: formCodigo.trim() || null,
@@ -490,7 +492,7 @@ export default function Estoque() {
     setFormNumeroSerie(""); setFormFornecedor("");
     setFormRegistroAnvisa(""); setFormFabricante(""); setFormValidade(""); setFormValidadeIsento(false); setFormLocalEstoque("");
     setFormNomeComercial(""); setFormLote("");
-    setFormFoto(null); setFormFotoPreview(null);
+    setFormFotos([]); setFormFotoPreviews([]);
   }
 
   function openEdit(p: Produto) {
@@ -504,7 +506,7 @@ export default function Estoque() {
     setFormValidade(p.validade || ""); setFormValidadeIsento(!p.validade && p.id ? true : false);
     setFormLocalEstoque(p.local_estoque || "");
     setFormNomeComercial(p.nome_comercial || ""); setFormLote(p.lote || "");
-    setFormFoto(null); setFormFotoPreview(p.foto_url || null);
+    setFormFotos([]); setFormFotoPreviews(parseFotoUrls(p.foto_url));
     setShowForm(true);
   }
 
@@ -657,13 +659,21 @@ export default function Estoque() {
                   const isBelowMin = p.estoque_atual < p.estoque_minimo;
                   return (
                     <div key={p.id} className="ios-list-item">
-                      {p.foto_url ? (
-                        <img src={p.foto_url} alt={p.nome} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
-                          <Package className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      )}
+                      {(() => {
+                        const fotos = parseFotoUrls(p.foto_url);
+                        return fotos.length > 0 ? (
+                          <div className="relative flex-shrink-0 cursor-pointer" onClick={() => setFotoModalUrl(fotos[0])}>
+                            <img src={fotos[0]} alt={p.nome} className="w-10 h-10 rounded-lg object-cover" />
+                            {fotos.length > 1 && (
+                              <span className="absolute -top-1 -right-1 text-[8px] font-bold bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center">+{fotos.length - 1}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
+                            <Package className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        );
+                      })()}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-foreground truncate">{p.nome}</span>
@@ -1139,38 +1149,43 @@ export default function Estoque() {
                 <button onClick={resetForm}><X className="h-5 w-5 text-muted-foreground" /></button>
               </div>
               <form onSubmit={handleSaveProduct} className="space-y-3">
-                {/* Photo upload */}
+                {/* Photo upload - multiple */}
                 <div>
-                  <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Foto do Produto</label>
-                  <div className="flex items-center gap-3">
-                    {formFotoPreview ? (
-                      <div className="relative">
-                        <img src={formFotoPreview} alt="Preview" className="w-16 h-16 rounded-xl object-cover border border-border" />
-                        <button type="button" onClick={() => { setFormFoto(null); setFormFotoPreview(null); }}
-                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center">
+                  <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Fotos do Produto</label>
+                  <div className="flex flex-wrap gap-2">
+                    {formFotoPreviews.map((preview, idx) => (
+                      <div key={idx} className="relative group">
+                        <img src={preview} alt={`Foto ${idx + 1}`} className="w-16 h-16 rounded-xl object-cover border border-border cursor-pointer"
+                          onClick={() => setFotoModalUrl(preview)} />
+                        <button type="button" onClick={() => {
+                          const newPreviews = [...formFotoPreviews]; newPreviews.splice(idx, 1);
+                          setFormFotoPreviews(newPreviews);
+                          // If it was a new file (blob:), also remove from formFotos
+                          if (preview.startsWith("blob:")) {
+                            const blobIdx = formFotoPreviews.slice(0, idx).filter(p => p.startsWith("blob:")).length;
+                            const newFiles = [...formFotos]; newFiles.splice(blobIdx, 1); setFormFotos(newFiles);
+                          }
+                        }}
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <X className="h-3 w-3" />
                         </button>
                       </div>
-                    ) : (
-                      <button type="button" onClick={() => fotoInputRef.current?.click()}
-                        className="w-16 h-16 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 hover:border-primary hover:bg-primary/5 transition">
-                        <ImagePlus className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-[9px] text-muted-foreground">Foto</span>
-                      </button>
-                    )}
-                    <input ref={fotoInputRef} type="file" accept="image/*" className="hidden"
-                      onChange={e => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setFormFoto(file);
-                          setFormFotoPreview(URL.createObjectURL(file));
-                        }
-                        e.target.value = "";
-                      }} />
-                    {!formFotoPreview && (
-                      <p className="text-[11px] text-muted-foreground">Clique para adicionar uma foto</p>
-                    )}
+                    ))}
+                    <button type="button" onClick={() => fotoInputRef.current?.click()}
+                      className="w-16 h-16 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 hover:border-primary hover:bg-primary/5 transition">
+                      <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-[9px] text-muted-foreground">Foto</span>
+                    </button>
                   </div>
+                  <input ref={fotoInputRef} type="file" accept="image/*" multiple className="hidden"
+                    onChange={e => {
+                      const files = Array.from(e.target.files || []);
+                      if (files.length > 0) {
+                        setFormFotos(prev => [...prev, ...files]);
+                        setFormFotoPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))]);
+                      }
+                      e.target.value = "";
+                    }} />
                 </div>
                 <div>
                   <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Nome *</label>
