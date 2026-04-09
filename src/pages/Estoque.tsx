@@ -7,9 +7,11 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
 import {
   Package, Search, Camera, Plus, Pencil, ArrowDownToLine, ArrowUpFromLine,
   X, AlertTriangle, Barcode, Download, RotateCcw, Archive, TrendingUp,
-  Clock, Eye, Trash2, CalendarClock,
+  Clock, Eye, Trash2, CalendarClock, Printer,
 } from "lucide-react";
 import { ListSkeleton } from "@/components/LoadingSkeleton";
+import ProductLabel, { type ProductLabelData } from "@/components/ProductLabel";
+import { useLabelPrint } from "@/hooks/useLabelPrint";
 
 interface Produto {
   id: string;
@@ -28,6 +30,8 @@ interface Produto {
   fabricante: string | null;
   validade: string | null;
   local_estoque: string | null;
+  nome_comercial: string | null;
+  lote: string | null;
 }
 
 interface Movimentacao {
@@ -125,7 +129,12 @@ export default function Estoque() {
   const [formFabricante, setFormFabricante] = useState("");
   const [formValidade, setFormValidade] = useState("");
   const [formLocalEstoque, setFormLocalEstoque] = useState("");
+  const [formNomeComercial, setFormNomeComercial] = useState("");
+  const [formLote, setFormLote] = useState("");
 
+  // Label printing
+  const { labelRef, triggerPrint } = useLabelPrint();
+  const [labelData, setLabelData] = useState<ProductLabelData | null>(null);
   const fetchAll = useCallback(async () => {
     if (!user) return;
     const tables = ESTOQUE_TABLES[estoqueSource];
@@ -421,12 +430,28 @@ export default function Estoque() {
       fabricante: formFabricante.trim() || null,
       validade: formValidade || null,
       local_estoque: formLocalEstoque.trim() || null,
+      nome_comercial: formNomeComercial.trim() || null,
+      lote: formLote.trim() || null,
     };
     let error;
     if (editProduct) { ({ error } = await supabase.from(tbl.produtos as any).update(payload).eq("id", editProduct.id)); }
     else { ({ error } = await supabase.from(tbl.produtos as any).insert(payload)); }
     if (error) { toast.error(error.message.includes("unique") ? "Código de barras já cadastrado" : "Erro ao salvar produto"); setSaving(false); return; }
     toast.success(editProduct ? "Produto atualizado" : "Produto cadastrado");
+    // Auto-print label on new product creation
+    if (!editProduct) {
+      setLabelData({
+        produto: formNome.trim(),
+        nome_comercial: formNomeComercial.trim() || null,
+        fabricante: formFabricante.trim() || null,
+        lote: formLote.trim() || null,
+        registro_anvisa: formRegistroAnvisa.trim() || null,
+        validade: formValidade || null,
+        codigo_barras: formCodigo.trim() || null,
+        estoque: estoqueSource,
+      });
+      setTimeout(() => triggerPrint(), 300);
+    }
     resetForm(); setSaving(false); fetchAll();
   }
 
@@ -436,6 +461,7 @@ export default function Estoque() {
     setFormEstoqueMin("1"); setFormEstoqueAtual("0"); setFormPrecoCusto(""); setFormPrecoVenda("");
     setFormNumeroSerie(""); setFormFornecedor("");
     setFormRegistroAnvisa(""); setFormFabricante(""); setFormValidade(""); setFormLocalEstoque("");
+    setFormNomeComercial(""); setFormLote("");
   }
 
   function openEdit(p: Produto) {
@@ -447,6 +473,7 @@ export default function Estoque() {
     setFormNumeroSerie(p.numero_serie || ""); setFormFornecedor(p.fornecedor_id || "");
     setFormRegistroAnvisa(p.registro_anvisa || ""); setFormFabricante(p.fabricante || "");
     setFormValidade(p.validade || ""); setFormLocalEstoque(p.local_estoque || "");
+    setFormNomeComercial(p.nome_comercial || ""); setFormLote(p.lote || "");
     setShowForm(true);
   }
 
@@ -607,6 +634,21 @@ export default function Estoque() {
                         </button>
                         <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg hover:bg-muted" title="Editar">
                           <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
+                        <button onClick={() => {
+                          setLabelData({
+                            produto: p.nome,
+                            nome_comercial: p.nome_comercial,
+                            fabricante: p.fabricante,
+                            lote: p.lote,
+                            registro_anvisa: p.registro_anvisa,
+                            validade: p.validade,
+                            codigo_barras: p.codigo_barras,
+                            estoque: estoqueSource,
+                          });
+                          setTimeout(() => triggerPrint(), 300);
+                        }} className="p-1.5 rounded-lg hover:bg-muted" title="Reimprimir Etiqueta">
+                          <Printer className="h-3.5 w-3.5 text-muted-foreground" />
                         </button>
                         <button onClick={() => handleDeleteProduct(p)} className="p-1.5 rounded-lg hover:bg-destructive/10" title="Excluir">
                           <Trash2 className="h-3.5 w-3.5 text-destructive" />
@@ -1078,6 +1120,16 @@ export default function Estoque() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
+                    <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Nome Comercial</label>
+                    <input value={formNomeComercial} onChange={e => setFormNomeComercial(e.target.value)} className="ios-input w-full" placeholder="Nome comercial" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Lote</label>
+                    <input value={formLote} onChange={e => setFormLote(e.target.value)} className="ios-input w-full" placeholder="Nº do lote" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
                     <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Validade</label>
                     <input type="date" value={formValidade} onChange={e => setFormValidade(e.target.value)} className="ios-input w-full" />
                   </div>
@@ -1145,6 +1197,13 @@ export default function Estoque() {
             <Plus className="h-6 w-6" />
           </button>
         </>
+      )}
+
+      {/* Hidden label for printing */}
+      {labelData && (
+        <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+          <ProductLabel ref={labelRef} data={labelData} />
+        </div>
       )}
     </div>
   );

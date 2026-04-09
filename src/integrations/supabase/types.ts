@@ -544,7 +544,9 @@ export type Database = {
           fornecedor_id: string | null
           id: string
           local_estoque: string | null
+          lote: string | null
           nome: string
+          nome_comercial: string | null
           numero_serie: string | null
           preco_custo: number | null
           preco_venda: number | null
@@ -565,7 +567,9 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           local_estoque?: string | null
+          lote?: string | null
           nome: string
+          nome_comercial?: string | null
           numero_serie?: string | null
           preco_custo?: number | null
           preco_venda?: number | null
@@ -586,7 +590,9 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           local_estoque?: string | null
+          lote?: string | null
           nome?: string
+          nome_comercial?: string | null
           numero_serie?: string | null
           preco_custo?: number | null
           preco_venda?: number | null
@@ -618,7 +624,9 @@ export type Database = {
           fornecedor_id: string | null
           id: string
           local_estoque: string | null
+          lote: string | null
           nome: string
+          nome_comercial: string | null
           numero_serie: string | null
           preco_custo: number | null
           preco_venda: number | null
@@ -639,7 +647,9 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           local_estoque?: string | null
+          lote?: string | null
           nome: string
+          nome_comercial?: string | null
           numero_serie?: string | null
           preco_custo?: number | null
           preco_venda?: number | null
@@ -660,7 +670,9 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           local_estoque?: string | null
+          lote?: string | null
           nome?: string
+          nome_comercial?: string | null
           numero_serie?: string | null
           preco_custo?: number | null
           preco_venda?: number | null
