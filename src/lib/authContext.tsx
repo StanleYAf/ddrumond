@@ -9,6 +9,7 @@ interface AuthContextType {
   cargo: string | null;
   displayName: string | null;
   aprovado: boolean | null;
+  hasCargo: (role: string) => boolean;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
@@ -66,6 +67,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user) await fetchProfile(user.id);
   }, [user, fetchProfile]);
 
+  const hasCargo = useCallback((role: string) => {
+    if (!cargo) return false;
+    return cargo.split(",").map(c => c.trim()).includes(role);
+  }, [cargo]);
+
   const signUp = useCallback(async (email: string, password: string, displayName?: string) => {
     const { error } = await supabase.auth.signUp({
       email, password,
@@ -84,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, cargo, displayName, aprovado, signUp, signIn, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, loading, cargo, displayName, aprovado, hasCargo, signUp, signIn, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
