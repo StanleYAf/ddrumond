@@ -747,6 +747,7 @@ export type Database = {
     }
     Functions: {
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_controlador: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       categoria_lancamento: "produto" | "servico" | "contrato" | "acessorio"
