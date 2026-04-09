@@ -130,6 +130,7 @@ export default function Estoque() {
   const [formRegistroAnvisa, setFormRegistroAnvisa] = useState("");
   const [formFabricante, setFormFabricante] = useState("");
   const [formValidade, setFormValidade] = useState("");
+  const [formValidadeIsento, setFormValidadeIsento] = useState(false);
   const [formLocalEstoque, setFormLocalEstoque] = useState("");
   const [formNomeComercial, setFormNomeComercial] = useState("");
   const [formLote, setFormLote] = useState("");
