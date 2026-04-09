@@ -1199,7 +1199,12 @@ export default function Estoque() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Código de Barras</label>
-                    <input value={formCodigo} onChange={e => setFormCodigo(e.target.value)} className="ios-input w-full" placeholder="EAN" />
+                    <input value={formCodigo} onChange={e => setFormCodigo(e.target.value)} className="ios-input w-full" placeholder="EAN" disabled={formSemCodigo} />
+                    <label className="flex items-center gap-1.5 mt-1 cursor-pointer">
+                      <input type="checkbox" checked={formSemCodigo} onChange={e => { setFormSemCodigo(e.target.checked); if (e.target.checked) setFormCodigo(""); }}
+                        className="rounded border-border" />
+                      <span className="text-[10px] text-muted-foreground">Produto sem código de barras</span>
+                    </label>
                   </div>
                   <div>
                     <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Categoria</label>
