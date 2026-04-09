@@ -810,7 +810,7 @@ export default function Estoque() {
             <div className="glass-card p-4">
               <TrendingUp className="h-4 w-4 mb-1" style={{ color: '#30D158' }} />
               <p className="text-2xl font-bold text-foreground">{formatCurrency(valorTotal)}</p>
-              <p className="text-[11px] text-muted-foreground">Valor em estoque</p>
+              <p className="text-[11px] text-muted-foreground">Valor em estoque (venda)</p>
             </div>
           </div>
 
