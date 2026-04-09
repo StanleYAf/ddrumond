@@ -483,6 +483,7 @@ export default function Estoque() {
     setFormNumeroSerie(""); setFormFornecedor("");
     setFormRegistroAnvisa(""); setFormFabricante(""); setFormValidade(""); setFormValidadeIsento(false); setFormLocalEstoque("");
     setFormNomeComercial(""); setFormLote("");
+    setFormFoto(null); setFormFotoPreview(null);
   }
 
   function openEdit(p: Produto) {
@@ -496,6 +497,7 @@ export default function Estoque() {
     setFormValidade(p.validade || ""); setFormValidadeIsento(!p.validade && p.id ? true : false);
     setFormLocalEstoque(p.local_estoque || "");
     setFormNomeComercial(p.nome_comercial || ""); setFormLote(p.lote || "");
+    setFormFoto(null); setFormFotoPreview(p.foto_url || null);
     setShowForm(true);
   }
 
