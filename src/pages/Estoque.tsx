@@ -1120,6 +1120,16 @@ export default function Estoque() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
+                    <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Nome Comercial</label>
+                    <input value={formNomeComercial} onChange={e => setFormNomeComercial(e.target.value)} className="ios-input w-full" placeholder="Nome comercial" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Lote</label>
+                    <input value={formLote} onChange={e => setFormLote(e.target.value)} className="ios-input w-full" placeholder="Nº do lote" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
                     <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Validade</label>
                     <input type="date" value={formValidade} onChange={e => setFormValidade(e.target.value)} className="ios-input w-full" />
                   </div>
