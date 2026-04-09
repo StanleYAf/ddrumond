@@ -32,7 +32,7 @@ const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
             width: 1.2,
             height: 24,
             displayValue: !isInternal,
-            fontSize: 8,
+            fontSize: 7,
             font: "Arial",
             margin: 0,
             textMargin: 1,
