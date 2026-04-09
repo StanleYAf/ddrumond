@@ -118,7 +118,7 @@ export default function Configuracoes() {
   const [userSearch, setUserSearch] = useState("");
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
 
-  const isAdmin = currentCargo === "admin";
+  const isAdmin = hasCargo("admin");
 
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
