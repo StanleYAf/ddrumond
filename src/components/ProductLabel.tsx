@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import JsBarcode from "jsbarcode";
 import logoDsh from "@/assets/logo-dsh.png";
 import logoDmedical from "@/assets/logo-dmedical.png";
@@ -17,6 +17,11 @@ export interface ProductLabelData {
 const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
   ({ data }, ref) => {
     const barcodeRef = useRef<SVGSVGElement>(null);
+    const [logoError, setLogoError] = useState(false);
+
+    useEffect(() => {
+      setLogoError(false);
+    }, [data.estoque]);
 
     useEffect(() => {
       if (barcodeRef.current && data.codigo_barras) {
@@ -24,11 +29,12 @@ const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
           JsBarcode(barcodeRef.current, data.codigo_barras, {
             format: "CODE128",
             width: 1.2,
-            height: 28,
+            height: 24,
             displayValue: true,
             fontSize: 8,
             font: "Arial",
-            margin: 2,
+            margin: 0,
+            textMargin: 1,
           });
         } catch {
           // invalid barcode
@@ -47,24 +53,50 @@ const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
 
     return (
       <div ref={ref} style={{
-        width: "100mm", height: "50mm", padding: "2mm",
-        fontFamily: "Arial, sans-serif", fontSize: "6.5pt", color: "#000",
-        background: "#fff", boxSizing: "border-box", display: "flex",
-        flexDirection: "column", justifyContent: "space-between",
+        width: "100mm",
+        height: "50mm",
+        padding: "2mm",
+        fontFamily: "Arial, sans-serif",
+        fontSize: "6.5pt",
+        color: "#000",
+        background: "#fff",
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
         overflow: "hidden",
       }}>
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: "2mm", marginBottom: "1mm", borderBottom: "1px solid #000", paddingBottom: "1.5mm" }}>
-          <img src={logo} alt={empresa} style={{ height: "10mm", maxWidth: "20mm", objectFit: "contain" }}
-            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden-fallback"); }}
-          />
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "2mm",
+          borderBottom: "1px solid #000",
+          paddingBottom: "1.5mm",
+          marginBottom: "1mm",
+          flexShrink: 0,
+        }}>
+          {!logoError ? (
+            <img
+              src={logo}
+              alt={empresa}
+              style={{ height: "10mm", maxWidth: "20mm", objectFit: "contain" }}
+              onError={() => setLogoError(true)}
+            />
+          ) : (
+            <span style={{ fontSize: "7pt", fontWeight: 700, color: "#333" }}>[{empresa}]</span>
+          )}
           <span style={{ fontSize: "8pt", fontWeight: 700 }}>{empresa}</span>
         </div>
 
-        {/* Data grid */}
+        {/* Data grid — 2 columns x 3 rows */}
         <div style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr",
-          gap: "0.3mm 2mm", flex: 1, fontSize: "6.5pt",
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gridTemplateRows: "auto auto auto",
+          gap: "0.3mm 2mm",
+          flex: 1,
+          minHeight: 0,
+          overflow: "hidden",
         }}>
           <Field label="Produto" value={data.produto} />
           <Field label="Nome Comercial" value={data.nome_comercial} />
@@ -74,10 +106,16 @@ const ProductLabel = forwardRef<HTMLDivElement, { data: ProductLabelData }>(
           <Field label="Validade" value={formatVal(data.validade)} />
         </div>
 
-        {/* Barcode */}
+        {/* Barcode — centered, never clipped */}
         {data.codigo_barras && (
-          <div style={{ textAlign: "center", marginTop: "1mm" }}>
-            <svg ref={barcodeRef} />
+          <div style={{
+            textAlign: "center",
+            marginTop: "0.5mm",
+            flexShrink: 0,
+            overflow: "hidden",
+            maxHeight: "12mm",
+          }}>
+            <svg ref={barcodeRef} style={{ maxWidth: "100%", height: "auto" }} />
           </div>
         )}
       </div>
@@ -89,9 +127,28 @@ ProductLabel.displayName = "ProductLabel";
 
 function Field({ label, value }: { label: string; value?: string | null }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
-      <span style={{ fontSize: "6.5pt", color: "#333", fontWeight: 700, textTransform: "uppercase" as const }}>{label}</span>
-      <span style={{ fontSize: "7.5pt", fontWeight: 500, color: "#000" }}>{value || "—"}</span>
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden",
+      minWidth: 0,
+    }}>
+      <span style={{
+        fontSize: "6.5pt",
+        color: "#333",
+        fontWeight: 700,
+        textTransform: "uppercase" as const,
+        lineHeight: 1.2,
+      }}>{label}</span>
+      <span style={{
+        fontSize: "7.5pt",
+        fontWeight: 500,
+        color: "#000",
+        lineHeight: 1.3,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+      }}>{value || "—"}</span>
     </div>
   );
 }
