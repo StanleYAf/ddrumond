@@ -54,10 +54,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export function RoleGuard({ allowed, children }: { allowed: string[]; children: React.ReactNode }) {
-  const { cargo } = useAuth();
+  const { cargo, hasCargo } = useAuth();
   if (!cargo) return <>{children}</>;
-  if (cargo === "admin") return <>{children}</>;
-  if (allowed.includes(cargo)) return <>{children}</>;
+  if (hasCargo("admin")) return <>{children}</>;
+  const userCargos = cargo.split(",").map(c => c.trim());
+  if (userCargos.some(c => allowed.includes(c))) return <>{children}</>;
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
       <AlertTriangle className="h-12 w-12 text-destructive" />
