@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/authContext";
 import { toast } from "sonner";
 import { formatCurrency, MESES } from "@/lib/types";
+import { applyCurrencyMask, parseCurrencyMask, numberToCurrencyMask } from "@/lib/currencyMask";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
   Package, Search, Camera, Plus, Pencil, ArrowDownToLine, ArrowUpFromLine,
@@ -129,6 +130,7 @@ export default function Estoque() {
   const [formRegistroAnvisa, setFormRegistroAnvisa] = useState("");
   const [formFabricante, setFormFabricante] = useState("");
   const [formValidade, setFormValidade] = useState("");
+  const [formValidadeIsento, setFormValidadeIsento] = useState(false);
   const [formLocalEstoque, setFormLocalEstoque] = useState("");
   const [formNomeComercial, setFormNomeComercial] = useState("");
   const [formLote, setFormLote] = useState("");
@@ -232,7 +234,7 @@ export default function Estoque() {
   // Stock health
   const totalSKUs = produtos.filter(p => p.ativo).length;
   const valorTotal = useMemo(() =>
-    produtos.filter(p => p.ativo).reduce((s, p) => s + p.estoque_atual * (p.preco_custo || 0), 0), [produtos]);
+    produtos.filter(p => p.ativo).reduce((s, p) => s + p.estoque_atual * (p.preco_venda || 0), 0), [produtos]);
 
   const top10 = useMemo(() => {
     const countMap = new Map<string, number>();
@@ -423,13 +425,13 @@ export default function Estoque() {
       user_id: user.id, nome: formNome.trim(), codigo_barras: formCodigo.trim() || null,
       categoria: formCategoria.trim() || null, unidade: formUnidade || "un",
       estoque_minimo: parseFloat(formEstoqueMin) || 1, estoque_atual: parseFloat(formEstoqueAtual) || 0,
-      preco_custo: formPrecoCusto ? parseFloat(formPrecoCusto) : null,
-      preco_venda: formPrecoVenda ? parseFloat(formPrecoVenda) : null,
+      preco_custo: formPrecoCusto ? parseCurrencyMask(formPrecoCusto) : null,
+      preco_venda: formPrecoVenda ? parseCurrencyMask(formPrecoVenda) : null,
       numero_serie: formNumeroSerie.trim() || null,
       fornecedor_id: formFornecedor || null,
       registro_anvisa: formRegistroAnvisa.trim() || null,
       fabricante: formFabricante.trim() || null,
-      validade: formValidade || null,
+      validade: formValidadeIsento ? null : (formValidade || null),
       local_estoque: formLocalEstoque.trim() || null,
       nome_comercial: formNomeComercial.trim() || null,
       lote: formLote.trim() || null,
@@ -461,7 +463,7 @@ export default function Estoque() {
     setFormNome(""); setFormCodigo(""); setFormCategoria(""); setFormUnidade("un");
     setFormEstoqueMin("1"); setFormEstoqueAtual("0"); setFormPrecoCusto(""); setFormPrecoVenda("");
     setFormNumeroSerie(""); setFormFornecedor("");
-    setFormRegistroAnvisa(""); setFormFabricante(""); setFormValidade(""); setFormLocalEstoque("");
+    setFormRegistroAnvisa(""); setFormFabricante(""); setFormValidade(""); setFormValidadeIsento(false); setFormLocalEstoque("");
     setFormNomeComercial(""); setFormLote("");
   }
 
@@ -469,11 +471,12 @@ export default function Estoque() {
     setEditProduct(p); setFormNome(p.nome); setFormCodigo(p.codigo_barras || "");
     setFormCategoria(p.categoria || ""); setFormUnidade(p.unidade);
     setFormEstoqueMin(String(p.estoque_minimo)); setFormEstoqueAtual(String(p.estoque_atual));
-    setFormPrecoCusto(p.preco_custo != null ? String(p.preco_custo) : "");
-    setFormPrecoVenda(p.preco_venda != null ? String(p.preco_venda) : "");
+    setFormPrecoCusto(p.preco_custo != null ? numberToCurrencyMask(p.preco_custo) : "");
+    setFormPrecoVenda(p.preco_venda != null ? numberToCurrencyMask(p.preco_venda) : "");
     setFormNumeroSerie(p.numero_serie || ""); setFormFornecedor(p.fornecedor_id || "");
     setFormRegistroAnvisa(p.registro_anvisa || ""); setFormFabricante(p.fabricante || "");
-    setFormValidade(p.validade || ""); setFormLocalEstoque(p.local_estoque || "");
+    setFormValidade(p.validade || ""); setFormValidadeIsento(!p.validade && p.id ? true : false);
+    setFormLocalEstoque(p.local_estoque || "");
     setFormNomeComercial(p.nome_comercial || ""); setFormLote(p.lote || "");
     setShowForm(true);
   }
@@ -504,6 +507,32 @@ export default function Estoque() {
     a.download = `movimentacoes_${movFilterAno}-${String(movFilterMes + 1).padStart(2, "0")}.csv`;
     a.click(); URL.revokeObjectURL(url);
     toast.success("CSV exportado");
+  }
+
+  function exportInventarioCSV() {
+    const ativos = produtos.filter(p => p.ativo);
+    const rows = ativos.map(p => {
+      const forn = fornecedores.find(f => f.id === p.fornecedor_id);
+      return [
+        p.nome, p.nome_comercial || "", p.codigo_barras || "", p.categoria || "",
+        p.fabricante || "", p.lote || "", p.registro_anvisa || "",
+        p.validade ? p.validade.split("-").reverse().join("/") : "Isento",
+        p.local_estoque || "", p.estoque_atual, p.estoque_minimo, p.unidade,
+        p.preco_custo != null ? p.preco_custo.toFixed(2).replace(".", ",") : "",
+        p.preco_venda != null ? p.preco_venda.toFixed(2).replace(".", ",") : "",
+        p.preco_venda != null ? (p.estoque_atual * p.preco_venda).toFixed(2).replace(".", ",") : "",
+        forn?.nome || "", p.numero_serie || "",
+      ].map(v => `"${v}"`).join(",");
+    });
+    const header = "Nome,Nome Comercial,Código Barras,Categoria,Fabricante,Lote,Registro ANVISA,Validade,Local,Estoque Atual,Estoque Mín.,Unidade,Preço Custo,Preço Venda,Valor Total Venda,Fornecedor,Nº Série";
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url;
+    const srcLabel = estoqueSource === "dsh" ? "DSH" : "DMedical";
+    a.download = `inventario_${srcLabel}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    toast.success("Relatório de inventário exportado");
   }
 
   function formatDateTime(iso: string) {
@@ -580,9 +609,16 @@ export default function Estoque() {
             </button>
           </div>
 
-          {/* Product List */}
+          {/* Inventory Export + Product List */}
           <div>
-            <p className="ios-section-title">PRODUTOS ({filtered.length})</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="ios-section-title mb-0">PRODUTOS ({filtered.length})</p>
+              {filtered.length > 0 && (
+                <button onClick={exportInventarioCSV} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary text-foreground hover:bg-muted transition">
+                  <Download className="h-3.5 w-3.5" />Inventário CSV
+                </button>
+              )}
+            </div>
             {filtered.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
@@ -605,7 +641,7 @@ export default function Estoque() {
                           {p.preco_venda != null && <span className="text-[11px] text-muted-foreground">{formatCurrency(p.preco_venda)}</span>}
                           {p.fabricante && <span className="text-[11px] text-muted-foreground">• {p.fabricante}</span>}
                           {p.local_estoque && <span className="text-[11px] text-muted-foreground">📍 {p.local_estoque}</span>}
-                          {p.validade && (() => {
+                          {p.validade ? (() => {
                             const [y, m, d] = p.validade.split("-").map(Number);
                             const expDate = new Date(y, m - 1, d);
                             const diff = Math.ceil((expDate.getTime() - new Date().getTime()) / 86400000);
@@ -614,7 +650,7 @@ export default function Estoque() {
                               return <span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ color, background: `${color}15` }}>{diff <= 0 ? 'Vencido' : `Val: ${diff}d`}</span>;
                             }
                             return null;
-                          })()}
+                          })() : <span className="text-[10px] px-1 py-0.5 rounded bg-secondary text-muted-foreground">Isento</span>}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -774,7 +810,7 @@ export default function Estoque() {
             <div className="glass-card p-4">
               <TrendingUp className="h-4 w-4 mb-1" style={{ color: '#30D158' }} />
               <p className="text-2xl font-bold text-foreground">{formatCurrency(valorTotal)}</p>
-              <p className="text-[11px] text-muted-foreground">Valor em estoque</p>
+              <p className="text-[11px] text-muted-foreground">Valor em estoque (venda)</p>
             </div>
           </div>
 
@@ -1100,11 +1136,11 @@ export default function Estoque() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Preço Custo</label>
-                    <input type="number" step="0.01" value={formPrecoCusto} onChange={e => setFormPrecoCusto(e.target.value)} className="ios-input w-full" placeholder="0.00" />
+                    <input value={formPrecoCusto} onChange={e => setFormPrecoCusto(applyCurrencyMask(e.target.value))} className="ios-input w-full" placeholder="R$ 0,00" />
                   </div>
                   <div>
                     <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Preço Venda</label>
-                    <input type="number" step="0.01" value={formPrecoVenda} onChange={e => setFormPrecoVenda(e.target.value)} className="ios-input w-full" placeholder="0.00" />
+                    <input value={formPrecoVenda} onChange={e => setFormPrecoVenda(applyCurrencyMask(e.target.value))} className="ios-input w-full" placeholder="R$ 0,00" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -1143,7 +1179,16 @@ export default function Estoque() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Validade</label>
-                    <input type="date" value={formValidade} onChange={e => setFormValidade(e.target.value)} className="ios-input w-full" />
+                    <div className="space-y-1.5">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={formValidadeIsento} onChange={e => { setFormValidadeIsento(e.target.checked); if (e.target.checked) setFormValidade(""); }}
+                          className="rounded border-border" />
+                        <span className="text-[11px] text-muted-foreground">Isento</span>
+                      </label>
+                      {!formValidadeIsento && (
+                        <input type="date" value={formValidade} onChange={e => setFormValidade(e.target.value)} className="ios-input w-full" />
+                      )}
+                    </div>
                   </div>
                   <div>
                     <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Local de Estoque</label>
