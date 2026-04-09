@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
-import { LayoutDashboard, FilePlus, BarChart3, PhoneCall, Settings, FileBarChart, Sun, Moon, Package, LogOut, Kanban } from "lucide-react";
+import { LayoutDashboard, FilePlus, BarChart3, PhoneCall, Settings, FileBarChart, Sun, Moon, Package, LogOut, Kanban, PanelLeftClose, PanelLeft } from "lucide-react";
 import { useTheme } from "@/lib/themeContext";
 import { useAuth } from "@/lib/authContext";
 
@@ -18,31 +19,42 @@ const allNavItems = [
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { mode, toggleMode } = useTheme();
-  const { signOut, user, cargo } = useAuth();
+  const { signOut, user, hasCargo } = useAuth();
   const isDark = mode === "dark";
+  const [collapsed, setCollapsed] = useState(false);
 
   const navItems = allNavItems.filter(item => {
     if (item.group === "always") return true;
-    if (!cargo || cargo === "admin") return true;
-    if (cargo === "dash") return item.group === "dash";
-    if (cargo === "estoque") return item.group === "estoque";
+    if (hasCargo("admin")) return true;
+    if (hasCargo("dash") && item.group === "dash") return true;
+    if ((hasCargo("estoque") || hasCargo("Controlador")) && item.group === "estoque") return true;
     return false;
   });
 
   return (
     <div className="min-h-screen flex w-full bg-background">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-60 fixed inset-y-0 left-0 z-40 border-r border-border bg-sidebar"
+      <aside className={`hidden md:flex flex-col fixed inset-y-0 left-0 z-40 border-r border-border bg-sidebar transition-all duration-200 ${collapsed ? 'w-16' : 'w-60'}`}
         style={{ backdropFilter: 'blur(20px)' }}>
-        <div className="p-5 pb-3 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-foreground tracking-tight">Painel Comercial</h1>
-            <p className="text-xs mt-0.5 text-muted-foreground">Equipamentos Médicos</p>
+        <div className={`p-5 pb-3 flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
+          {!collapsed && (
+            <div>
+              <h1 className="text-lg font-semibold text-foreground tracking-tight">Painel Comercial</h1>
+              <p className="text-xs mt-0.5 text-muted-foreground">Equipamentos Médicos</p>
+            </div>
+          )}
+          <div className={`flex items-center ${collapsed ? '' : 'gap-1'}`}>
+            {!collapsed && (
+              <button onClick={toggleMode}
+                className="p-2 rounded-xl transition-colors bg-secondary hover:bg-secondary/80">
+                {isDark ? <Sun className="h-4 w-4 text-warning" /> : <Moon className="h-4 w-4 text-muted-foreground" />}
+              </button>
+            )}
+            <button onClick={() => setCollapsed(!collapsed)}
+              className="p-2 rounded-xl transition-colors hover:bg-secondary" title={collapsed ? "Expandir" : "Recolher"}>
+              {collapsed ? <PanelLeft className="h-4 w-4 text-muted-foreground" /> : <PanelLeftClose className="h-4 w-4 text-muted-foreground" />}
+            </button>
           </div>
-          <button onClick={toggleMode}
-            className="p-2 rounded-xl transition-colors bg-secondary hover:bg-secondary/80">
-            {isDark ? <Sun className="h-4 w-4 text-warning" /> : <Moon className="h-4 w-4 text-muted-foreground" />}
-          </button>
         </div>
         <nav className="flex-1 px-3 py-2 space-y-0.5">
           {navItems.map((item) => {
@@ -52,32 +64,34 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 key={item.url}
                 to={item.url}
                 end={item.url === "/"}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${collapsed ? 'justify-center' : ''} ${
                   isActive ? 'text-foreground font-medium bg-secondary' : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
                 }`}
                 activeClassName="bg-secondary text-foreground font-medium"
+                title={collapsed ? item.title : undefined}
               >
-                <item.icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
-                <span>{item.title}</span>
+                <item.icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
+                {!collapsed && <span>{item.title}</span>}
               </NavLink>
             );
           })}
         </nav>
         {/* Logout */}
         <div className="p-3 border-t border-border">
-          {user && (
+          {!collapsed && user && (
             <p className="text-[11px] text-muted-foreground truncate mb-2 px-3">{user.email}</p>
           )}
           <button onClick={signOut}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-destructive hover:bg-destructive/10 transition-all">
-            <LogOut className="h-5 w-5" />
-            <span>Sair</span>
+            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-destructive hover:bg-destructive/10 transition-all ${collapsed ? 'justify-center' : ''}`}
+            title={collapsed ? "Sair" : undefined}>
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            {!collapsed && <span>Sair</span>}
           </button>
         </div>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 md:ml-60 pb-24 md:pb-6">
+      <main className={`flex-1 pb-24 md:pb-6 transition-all duration-200 ${collapsed ? 'md:ml-16' : 'md:ml-60'}`}>
         <div className="max-w-4xl mx-auto px-4 py-5 md:px-6 md:py-6">
           {children}
         </div>

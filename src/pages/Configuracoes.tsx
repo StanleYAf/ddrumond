@@ -26,10 +26,12 @@ interface ProfileRow {
   created_at: string;
 }
 
-function UserRow({ u, user, savingUserId, onApprove, onRevoke, onReject, onCargo }: {
+function UserRow({ u, user, savingUserId, onApprove, onRevoke, onReject, onToggleCargo }: {
   u: ProfileRow; user: any; savingUserId: string | null;
-  onApprove: (id: string) => void; onRevoke: (id: string) => void; onReject: (id: string) => void; onCargo: (id: string, cargo: string) => void;
+  onApprove: (id: string) => void; onRevoke: (id: string) => void; onReject: (id: string) => void;
+  onToggleCargo: (id: string, cargo: string) => void;
 }) {
+  const userCargos = u.cargo ? u.cargo.split(",").map(c => c.trim()) : [];
   return (
     <div className="p-4 border-b border-border/30 last:border-0 space-y-3">
       <div className="flex items-center justify-between">
@@ -46,10 +48,14 @@ function UserRow({ u, user, savingUserId, onApprove, onRevoke, onReject, onCargo
             </p>
             <p className="text-[11px] text-muted-foreground">
               Desde {new Date(u.created_at).toLocaleDateString("pt-BR")}
+              {userCargos.length > 0 && (
+                <span className="ml-1.5">
+                  · {userCargos.map(c => CARGOS.find(cc => cc.value === c)?.label || c).join(", ")}
+                </span>
+              )}
             </p>
           </div>
         </div>
-        {/* Approve / Revoke button */}
         {u.aprovado ? (
           <button onClick={() => onRevoke(u.user_id)} disabled={savingUserId === u.user_id || u.user_id === user?.id}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium bg-destructive/10 text-destructive disabled:opacity-30 transition">
@@ -68,20 +74,22 @@ function UserRow({ u, user, savingUserId, onApprove, onRevoke, onReject, onCargo
           </div>
         )}
       </div>
-      {/* Cargo buttons - only show for approved users */}
       {u.aprovado && (
         <div className="grid grid-cols-4 gap-2">
-          {CARGOS.map(c => (
-            <button key={c.value} onClick={() => onCargo(u.user_id, c.value)}
-              disabled={savingUserId === u.user_id}
-              className="p-2 rounded-xl text-center transition disabled:opacity-50"
-              style={{
-                background: u.cargo === c.value ? 'hsl(var(--primary) / 0.15)' : 'hsl(var(--muted))',
-                border: u.cargo === c.value ? '1px solid hsl(var(--primary) / 0.4)' : '1px solid transparent',
-              }}>
-              <p className="text-xs font-semibold" style={{ color: u.cargo === c.value ? 'hsl(var(--primary))' : undefined }}>{c.label}</p>
-            </button>
-          ))}
+          {CARGOS.map(c => {
+            const isSelected = userCargos.includes(c.value);
+            return (
+              <button key={c.value} onClick={() => onToggleCargo(u.user_id, c.value)}
+                disabled={savingUserId === u.user_id}
+                className="p-2 rounded-xl text-center transition disabled:opacity-50"
+                style={{
+                  background: isSelected ? 'hsl(var(--primary) / 0.15)' : 'hsl(var(--muted))',
+                  border: isSelected ? '1px solid hsl(var(--primary) / 0.4)' : '1px solid transparent',
+                }}>
+                <p className="text-xs font-semibold" style={{ color: isSelected ? 'hsl(var(--primary))' : undefined }}>{c.label}</p>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -90,7 +98,7 @@ function UserRow({ u, user, savingUserId, onApprove, onRevoke, onReject, onCargo
 
 export default function Configuracoes() {
   const { data, setData, loading, error, undoDelete } = useAppData();
-  const { user, refreshProfile, cargo: currentCargo, displayName: currentDisplayName } = useAuth();
+  const { user, refreshProfile, cargo: currentCargo, displayName: currentDisplayName, hasCargo } = useAuth();
   const { mode, accent, setMode, setAccent, toggleMode } = useTheme();
   const [novoVendedor, setNovoVendedor] = useState("");
   const [vendedoresStatus, setVendedoresStatus] = useState<{nome: string; ativo: boolean}[]>([]);
@@ -110,7 +118,7 @@ export default function Configuracoes() {
   const [userSearch, setUserSearch] = useState("");
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
 
-  const isAdmin = currentCargo === "admin";
+  const isAdmin = hasCargo("admin");
 
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
@@ -154,15 +162,24 @@ export default function Configuracoes() {
       });
   }, [user, isAdmin]);
 
-  async function updateUserCargo(profileUserId: string, newCargo: string) {
+  async function toggleUserCargo(profileUserId: string, role: string) {
     setSavingUserId(profileUserId);
-    const { error } = await supabase.from("profiles").update({ cargo: newCargo || null }).eq("user_id", profileUserId);
+    const currentUser = allUsers.find(u => u.user_id === profileUserId);
+    const currentCargos = currentUser?.cargo ? currentUser.cargo.split(",").map(c => c.trim()) : [];
+    let newCargos: string[];
+    if (currentCargos.includes(role)) {
+      newCargos = currentCargos.filter(c => c !== role);
+    } else {
+      newCargos = [...currentCargos, role];
+    }
+    const newCargo = newCargos.length > 0 ? newCargos.join(",") : null;
+    const { error } = await supabase.from("profiles").update({ cargo: newCargo }).eq("user_id", profileUserId);
     if (error) {
       toast.error("Erro ao atualizar cargo");
     } else {
-      setAllUsers(prev => prev.map(u => u.user_id === profileUserId ? { ...u, cargo: newCargo || null } : u));
+      setAllUsers(prev => prev.map(u => u.user_id === profileUserId ? { ...u, cargo: newCargo } : u));
       if (profileUserId === user?.id) {
-        setProfileCargo(newCargo);
+        setProfileCargo(newCargo || "");
         await refreshProfile();
       }
       toast.success("Cargo atualizado");
@@ -359,7 +376,7 @@ export default function Configuracoes() {
               <span className="text-sm text-foreground">Cargo</span>
             </div>
             <span className="text-sm font-medium text-muted-foreground">
-              {CARGOS.find(c => c.value === profileCargo)?.label || "Não definido"}
+              {profileCargo ? profileCargo.split(",").map(c => CARGOS.find(cc => cc.value === c.trim())?.label || c.trim()).join(", ") : "Não definido"}
             </span>
           </div>
           <div className="p-3">
@@ -412,7 +429,7 @@ export default function Configuracoes() {
                       )}
                       {pending.map(u => (
                         <UserRow key={u.id} u={u} user={user} savingUserId={savingUserId}
-                          onApprove={approveUser} onRevoke={revokeUser} onReject={rejectUser} onCargo={updateUserCargo} />
+                          onApprove={approveUser} onRevoke={revokeUser} onReject={rejectUser} onToggleCargo={toggleUserCargo} />
                       ))}
                       {approved.length > 0 && (
                         <div className="px-4 pt-3 pb-1">
@@ -423,7 +440,7 @@ export default function Configuracoes() {
                       )}
                       {approved.map(u => (
                         <UserRow key={u.id} u={u} user={user} savingUserId={savingUserId}
-                          onApprove={approveUser} onRevoke={revokeUser} onReject={rejectUser} onCargo={updateUserCargo} />
+                          onApprove={approveUser} onRevoke={revokeUser} onReject={rejectUser} onToggleCargo={toggleUserCargo} />
                       ))}
                     </>
                   );

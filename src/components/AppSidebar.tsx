@@ -28,13 +28,13 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { signOut, user, cargo } = useAuth();
+  const { signOut, user, hasCargo } = useAuth();
 
   const items = allItems.filter(item => {
     if (item.group === "always") return true;
-    if (!cargo || cargo === "admin") return true;
-    if (cargo === "dash") return item.group === "dash";
-    if (cargo === "estoque" || cargo === "Controlador") return item.group === "estoque";
+    if (hasCargo("admin")) return true;
+    if (hasCargo("dash") && item.group === "dash") return true;
+    if ((hasCargo("estoque") || hasCargo("Controlador")) && item.group === "estoque") return true;
     return false;
   });
 
