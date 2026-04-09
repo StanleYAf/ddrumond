@@ -26,10 +26,12 @@ interface ProfileRow {
   created_at: string;
 }
 
-function UserRow({ u, user, savingUserId, onApprove, onRevoke, onReject, onCargo }: {
+function UserRow({ u, user, savingUserId, onApprove, onRevoke, onReject, onToggleCargo }: {
   u: ProfileRow; user: any; savingUserId: string | null;
-  onApprove: (id: string) => void; onRevoke: (id: string) => void; onReject: (id: string) => void; onCargo: (id: string, cargo: string) => void;
+  onApprove: (id: string) => void; onRevoke: (id: string) => void; onReject: (id: string) => void;
+  onToggleCargo: (id: string, cargo: string) => void;
 }) {
+  const userCargos = u.cargo ? u.cargo.split(",").map(c => c.trim()) : [];
   return (
     <div className="p-4 border-b border-border/30 last:border-0 space-y-3">
       <div className="flex items-center justify-between">
@@ -46,10 +48,14 @@ function UserRow({ u, user, savingUserId, onApprove, onRevoke, onReject, onCargo
             </p>
             <p className="text-[11px] text-muted-foreground">
               Desde {new Date(u.created_at).toLocaleDateString("pt-BR")}
+              {userCargos.length > 0 && (
+                <span className="ml-1.5">
+                  · {userCargos.map(c => CARGOS.find(cc => cc.value === c)?.label || c).join(", ")}
+                </span>
+              )}
             </p>
           </div>
         </div>
-        {/* Approve / Revoke button */}
         {u.aprovado ? (
           <button onClick={() => onRevoke(u.user_id)} disabled={savingUserId === u.user_id || u.user_id === user?.id}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium bg-destructive/10 text-destructive disabled:opacity-30 transition">
@@ -68,20 +74,22 @@ function UserRow({ u, user, savingUserId, onApprove, onRevoke, onReject, onCargo
           </div>
         )}
       </div>
-      {/* Cargo buttons - only show for approved users */}
       {u.aprovado && (
         <div className="grid grid-cols-4 gap-2">
-          {CARGOS.map(c => (
-            <button key={c.value} onClick={() => onCargo(u.user_id, c.value)}
-              disabled={savingUserId === u.user_id}
-              className="p-2 rounded-xl text-center transition disabled:opacity-50"
-              style={{
-                background: u.cargo === c.value ? 'hsl(var(--primary) / 0.15)' : 'hsl(var(--muted))',
-                border: u.cargo === c.value ? '1px solid hsl(var(--primary) / 0.4)' : '1px solid transparent',
-              }}>
-              <p className="text-xs font-semibold" style={{ color: u.cargo === c.value ? 'hsl(var(--primary))' : undefined }}>{c.label}</p>
-            </button>
-          ))}
+          {CARGOS.map(c => {
+            const isSelected = userCargos.includes(c.value);
+            return (
+              <button key={c.value} onClick={() => onToggleCargo(u.user_id, c.value)}
+                disabled={savingUserId === u.user_id}
+                className="p-2 rounded-xl text-center transition disabled:opacity-50"
+                style={{
+                  background: isSelected ? 'hsl(var(--primary) / 0.15)' : 'hsl(var(--muted))',
+                  border: isSelected ? '1px solid hsl(var(--primary) / 0.4)' : '1px solid transparent',
+                }}>
+                <p className="text-xs font-semibold" style={{ color: isSelected ? 'hsl(var(--primary))' : undefined }}>{c.label}</p>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
