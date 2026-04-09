@@ -543,8 +543,9 @@ export default function Estoque() {
     toast.success("CSV exportado");
   }
 
-  function exportInventarioCSV() {
+  function getInventarioData() {
     const ativos = produtos.filter(p => p.ativo);
+    const header = ["Nome", "Nome Comercial", "Código Barras", "Categoria", "Fabricante", "Lote", "Registro ANVISA", "Validade", "Local", "Estoque Atual", "Estoque Mín.", "Unidade", "Preço Custo", "Preço Venda", "Valor Total Venda", "Fornecedor", "Nº Série"];
     const rows = ativos.map(p => {
       const forn = fornecedores.find(f => f.id === p.fornecedor_id);
       return [
@@ -552,21 +553,49 @@ export default function Estoque() {
         p.fabricante || "", p.lote || "", p.registro_anvisa || "",
         p.validade ? p.validade.split("-").reverse().join("/") : "Isento",
         p.local_estoque || "", p.estoque_atual, p.estoque_minimo, p.unidade,
-        p.preco_custo != null ? p.preco_custo.toFixed(2).replace(".", ",") : "",
-        p.preco_venda != null ? p.preco_venda.toFixed(2).replace(".", ",") : "",
-        p.preco_venda != null ? (p.estoque_atual * p.preco_venda).toFixed(2).replace(".", ",") : "",
+        p.preco_custo ?? "", p.preco_venda ?? "",
+        p.preco_venda != null ? p.estoque_atual * p.preco_venda : "",
         forn?.nome || "", p.numero_serie || "",
-      ].map(v => `"${v}"`).join(",");
+      ];
     });
-    const header = "Nome,Nome Comercial,Código Barras,Categoria,Fabricante,Lote,Registro ANVISA,Validade,Local,Estoque Atual,Estoque Mín.,Unidade,Preço Custo,Preço Venda,Valor Total Venda,Fornecedor,Nº Série";
-    const csv = [header, ...rows].join("\n");
+    return { header, rows };
+  }
+
+  function exportInventarioCSV() {
+    const { header, rows } = getInventarioData();
+    const csvRows = rows.map(r => r.map(v => `"${typeof v === "number" ? String(v).replace(".", ",") : v}"`).join(","));
+    const csv = [header.join(","), ...csvRows].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url;
     const srcLabel = estoqueSource === "dsh" ? "DSH" : "DMedical";
     a.download = `inventario_${srcLabel}_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click(); URL.revokeObjectURL(url);
-    toast.success("Relatório de inventário exportado");
+    toast.success("Relatório CSV exportado");
+  }
+
+  function exportInventarioXLSX() {
+    import("xlsx").then(XLSX => {
+      const { header, rows } = getInventarioData();
+      const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+      // Auto-size columns
+      ws["!cols"] = header.map((h, i) => {
+        const maxLen = Math.max(h.length, ...rows.map(r => String(r[i] ?? "").length));
+        return { wch: Math.min(maxLen + 2, 40) };
+      });
+      // Format currency columns (12=Custo, 13=Venda, 14=Total)
+      rows.forEach((_, ri) => {
+        [12, 13, 14].forEach(ci => {
+          const cell = ws[XLSX.utils.encode_cell({ r: ri + 1, c: ci })];
+          if (cell && typeof cell.v === "number") cell.z = '#,##0.00';
+        });
+      });
+      const wb = XLSX.utils.book_new();
+      const srcLabel = estoqueSource === "dsh" ? "DSH" : "DMedical";
+      XLSX.utils.book_append_sheet(wb, ws, "Inventário");
+      XLSX.writeFile(wb, `inventario_${srcLabel}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast.success("Relatório XLSX exportado");
+    });
   }
 
   function formatDateTime(iso: string) {
@@ -648,9 +677,14 @@ export default function Estoque() {
             <div className="flex items-center justify-between mb-1">
               <p className="ios-section-title mb-0">PRODUTOS ({filtered.length})</p>
               {filtered.length > 0 && (
-                <button onClick={exportInventarioCSV} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary text-foreground hover:bg-muted transition">
-                  <Download className="h-3.5 w-3.5" />Inventário CSV
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button onClick={exportInventarioCSV} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary text-foreground hover:bg-muted transition">
+                    <Download className="h-3.5 w-3.5" />CSV
+                  </button>
+                  <button onClick={exportInventarioXLSX} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary text-foreground hover:bg-muted transition">
+                    <Download className="h-3.5 w-3.5" />XLSX
+                  </button>
+                </div>
               )}
             </div>
             {filtered.length === 0 ? (
