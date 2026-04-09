@@ -461,6 +461,7 @@ export default function Estoque() {
     setFormEstoqueMin("1"); setFormEstoqueAtual("0"); setFormPrecoCusto(""); setFormPrecoVenda("");
     setFormNumeroSerie(""); setFormFornecedor("");
     setFormRegistroAnvisa(""); setFormFabricante(""); setFormValidade(""); setFormLocalEstoque("");
+    setFormNomeComercial(""); setFormLote("");
   }
 
   function openEdit(p: Produto) {
