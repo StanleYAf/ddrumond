@@ -234,7 +234,7 @@ export default function Estoque() {
   // Stock health
   const totalSKUs = produtos.filter(p => p.ativo).length;
   const valorTotal = useMemo(() =>
-    produtos.filter(p => p.ativo).reduce((s, p) => s + p.estoque_atual * (p.preco_custo || 0), 0), [produtos]);
+    produtos.filter(p => p.ativo).reduce((s, p) => s + p.estoque_atual * (p.preco_venda || 0), 0), [produtos]);
 
   const top10 = useMemo(() => {
     const countMap = new Map<string, number>();
