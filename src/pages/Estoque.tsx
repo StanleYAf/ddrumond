@@ -474,6 +474,7 @@ export default function Estoque() {
     if (error) { toast.error(error.message.includes("unique") ? "Código de barras já cadastrado" : "Erro ao salvar produto"); setSaving(false); return; }
     toast.success(editProduct ? "Produto atualizado" : "Produto cadastrado");
     if (!editProduct) {
+      const savedCodigo = (payload as any).codigo_barras;
       setLabelData({
         produto: formNome.trim(),
         nome_comercial: formNomeComercial.trim() || null,
@@ -481,7 +482,7 @@ export default function Estoque() {
         lote: formLote.trim() || null,
         registro_anvisa: formRegistroAnvisa.trim() || null,
         validade: formValidade || null,
-        codigo_barras: formCodigo.trim() || null,
+        codigo_barras: savedCodigo,
         estoque: estoqueSource,
       });
       setTimeout(() => triggerPrint(), 300);
@@ -491,7 +492,7 @@ export default function Estoque() {
 
   function resetForm() {
     setShowForm(false); setEditProduct(null);
-    setFormNome(""); setFormCodigo(""); setFormCategoria(""); setFormUnidade("un");
+    setFormNome(""); setFormCodigo(""); setFormSemCodigo(false); setFormCategoria(""); setFormUnidade("un");
     setFormEstoqueMin("1"); setFormEstoqueAtual("0"); setFormPrecoCusto(""); setFormPrecoVenda("");
     setFormNumeroSerie(""); setFormFornecedor("");
     setFormRegistroAnvisa(""); setFormFabricante(""); setFormValidade(""); setFormValidadeIsento(false); setFormLocalEstoque("");
@@ -500,7 +501,7 @@ export default function Estoque() {
   }
 
   function openEdit(p: Produto) {
-    setEditProduct(p); setFormNome(p.nome); setFormCodigo(p.codigo_barras || "");
+    setEditProduct(p); setFormNome(p.nome); setFormCodigo(p.codigo_barras || ""); setFormSemCodigo(p.codigo_barras?.startsWith("INT") || false);
     setFormCategoria(p.categoria || ""); setFormUnidade(p.unidade);
     setFormEstoqueMin(String(p.estoque_minimo)); setFormEstoqueAtual(String(p.estoque_atual));
     setFormPrecoCusto(p.preco_custo != null ? numberToCurrencyMask(p.preco_custo) : "");
