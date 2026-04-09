@@ -135,9 +135,16 @@ export default function Estoque() {
   const [formLocalEstoque, setFormLocalEstoque] = useState("");
   const [formNomeComercial, setFormNomeComercial] = useState("");
   const [formLote, setFormLote] = useState("");
-  const [formFoto, setFormFoto] = useState<File | null>(null);
-  const [formFotoPreview, setFormFotoPreview] = useState<string | null>(null);
+  const [formFotos, setFormFotos] = useState<File[]>([]);
+  const [formFotoPreviews, setFormFotoPreviews] = useState<string[]>([]);
   const fotoInputRef = useRef<HTMLInputElement>(null);
+  const [fotoModalUrl, setFotoModalUrl] = useState<string | null>(null);
+
+  function parseFotoUrls(fotoUrl: string | null): string[] {
+    if (!fotoUrl) return [];
+    try { const arr = JSON.parse(fotoUrl); if (Array.isArray(arr)) return arr; } catch {}
+    return [fotoUrl];
+  }
 
   // Label printing
   const { labelRef, triggerPrint } = useLabelPrint();
