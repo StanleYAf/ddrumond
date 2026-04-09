@@ -542,6 +542,7 @@ export type Database = {
           estoque_minimo: number
           fabricante: string | null
           fornecedor_id: string | null
+          foto_url: string | null
           id: string
           local_estoque: string | null
           lote: string | null
@@ -565,6 +566,7 @@ export type Database = {
           estoque_minimo?: number
           fabricante?: string | null
           fornecedor_id?: string | null
+          foto_url?: string | null
           id?: string
           local_estoque?: string | null
           lote?: string | null
@@ -588,6 +590,7 @@ export type Database = {
           estoque_minimo?: number
           fabricante?: string | null
           fornecedor_id?: string | null
+          foto_url?: string | null
           id?: string
           local_estoque?: string | null
           lote?: string | null
@@ -622,6 +625,7 @@ export type Database = {
           estoque_minimo: number
           fabricante: string | null
           fornecedor_id: string | null
+          foto_url: string | null
           id: string
           local_estoque: string | null
           lote: string | null
@@ -645,6 +649,7 @@ export type Database = {
           estoque_minimo?: number
           fabricante?: string | null
           fornecedor_id?: string | null
+          foto_url?: string | null
           id?: string
           local_estoque?: string | null
           lote?: string | null
@@ -668,6 +673,7 @@ export type Database = {
           estoque_minimo?: number
           fabricante?: string | null
           fornecedor_id?: string | null
+          foto_url?: string | null
           id?: string
           local_estoque?: string | null
           lote?: string | null
