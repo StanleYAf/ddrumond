@@ -1344,6 +1344,19 @@ export default function Estoque() {
           <ProductLabel ref={labelRef} data={labelData} />
         </div>
       )}
+
+      {/* Photo modal */}
+      {fotoModalUrl && (
+        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4" onClick={() => setFotoModalUrl(null)}>
+          <div className="relative max-w-[90vw] max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <img src={fotoModalUrl} alt="Foto do produto" className="max-w-full max-h-[85vh] rounded-2xl object-contain" />
+            <button onClick={() => setFotoModalUrl(null)}
+              className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center shadow-lg">
+              <X className="h-4 w-4 text-foreground" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
