@@ -30,6 +30,8 @@ interface Produto {
   fabricante: string | null;
   validade: string | null;
   local_estoque: string | null;
+  nome_comercial: string | null;
+  lote: string | null;
 }
 
 interface Movimentacao {
