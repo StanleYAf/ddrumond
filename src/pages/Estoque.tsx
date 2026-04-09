@@ -7,9 +7,11 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
 import {
   Package, Search, Camera, Plus, Pencil, ArrowDownToLine, ArrowUpFromLine,
   X, AlertTriangle, Barcode, Download, RotateCcw, Archive, TrendingUp,
-  Clock, Eye, Trash2, CalendarClock,
+  Clock, Eye, Trash2, CalendarClock, Printer,
 } from "lucide-react";
 import { ListSkeleton } from "@/components/LoadingSkeleton";
+import ProductLabel, { type ProductLabelData } from "@/components/ProductLabel";
+import { useLabelPrint } from "@/hooks/useLabelPrint";
 
 interface Produto {
   id: string;
