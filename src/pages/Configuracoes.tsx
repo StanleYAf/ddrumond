@@ -429,7 +429,7 @@ export default function Configuracoes() {
                       )}
                       {pending.map(u => (
                         <UserRow key={u.id} u={u} user={user} savingUserId={savingUserId}
-                          onApprove={approveUser} onRevoke={revokeUser} onReject={rejectUser} onCargo={updateUserCargo} />
+                          onApprove={approveUser} onRevoke={revokeUser} onReject={rejectUser} onToggleCargo={toggleUserCargo} />
                       ))}
                       {approved.length > 0 && (
                         <div className="px-4 pt-3 pb-1">
@@ -440,7 +440,7 @@ export default function Configuracoes() {
                       )}
                       {approved.map(u => (
                         <UserRow key={u.id} u={u} user={user} savingUserId={savingUserId}
-                          onApprove={approveUser} onRevoke={revokeUser} onReject={rejectUser} onCargo={updateUserCargo} />
+                          onApprove={approveUser} onRevoke={revokeUser} onReject={rejectUser} onToggleCargo={toggleUserCargo} />
                       ))}
                     </>
                   );
