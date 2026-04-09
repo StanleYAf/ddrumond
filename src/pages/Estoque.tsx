@@ -635,6 +635,21 @@ export default function Estoque() {
                         <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg hover:bg-muted" title="Editar">
                           <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                         </button>
+                        <button onClick={() => {
+                          setLabelData({
+                            produto: p.nome,
+                            nome_comercial: p.nome_comercial,
+                            fabricante: p.fabricante,
+                            lote: p.lote,
+                            registro_anvisa: p.registro_anvisa,
+                            validade: p.validade,
+                            codigo_barras: p.codigo_barras,
+                            estoque: estoqueSource,
+                          });
+                          setTimeout(() => triggerPrint(), 300);
+                        }} className="p-1.5 rounded-lg hover:bg-muted" title="Reimprimir Etiqueta">
+                          <Printer className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
                         <button onClick={() => handleDeleteProduct(p)} className="p-1.5 rounded-lg hover:bg-destructive/10" title="Excluir">
                           <Trash2 className="h-3.5 w-3.5 text-destructive" />
                         </button>
