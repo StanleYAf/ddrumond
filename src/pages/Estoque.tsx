@@ -1308,16 +1308,12 @@ export default function Estoque() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Validade</label>
-                    <div className="space-y-1.5">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={formValidadeIsento} onChange={e => { setFormValidadeIsento(e.target.checked); if (e.target.checked) setFormValidade(""); }}
-                          className="rounded border-border" />
-                        <span className="text-[11px] text-muted-foreground">Isento</span>
-                      </label>
-                      {!formValidadeIsento && (
-                        <input type="date" value={formValidade} onChange={e => setFormValidade(e.target.value)} className="ios-input w-full" />
-                      )}
-                    </div>
+                    <input type="date" value={formValidade} onChange={e => setFormValidade(e.target.value)} className="ios-input w-full" disabled={formValidadeIsento} />
+                    <label className="flex items-center gap-1.5 mt-1 cursor-pointer">
+                      <input type="checkbox" checked={formValidadeIsento} onChange={e => { setFormValidadeIsento(e.target.checked); if (e.target.checked) setFormValidade(""); }}
+                        className="rounded border-border" />
+                      <span className="text-[10px] text-muted-foreground">Isento de validade</span>
+                    </label>
                   </div>
                   <div>
                     <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Local de Estoque</label>
