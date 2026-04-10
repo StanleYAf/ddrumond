@@ -71,6 +71,7 @@ export default function Lancamentos() {
   const [descricao, setDescricao] = useState("");
   const [tipo, setTipo] = useState("");
   const [valor, setValor] = useState("");
+  const [vendedor, setVendedor] = useState("");
   const [dataLanc, setDataLanc] = useState(now.toISOString().slice(0, 10));
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formItens, setFormItens] = useState<Omit<LancamentoItem, "lancamento_id">[]>([emptyItem()]);
@@ -81,6 +82,7 @@ export default function Lancamentos() {
   const [editTipo, setEditTipo] = useState("");
   const [editValor, setEditValor] = useState("");
   const [editData, setEditData] = useState("");
+  const [editVendedor, setEditVendedor] = useState("");
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [editItens, setEditItens] = useState<LancamentoItem[]>([]);
   const [editItensLoading, setEditItensLoading] = useState(false);
@@ -109,6 +111,7 @@ export default function Lancamentos() {
       id: newId, cliente: cliente.trim(), valor: parseCurrencyMask(valor), data: dataLanc,
       [CATEGORIA_FIELD[formCat]]: descricao.trim(),
       tipo: tipo.trim() || undefined,
+      vendedor: vendedor || undefined,
     };
     setData((prev) => ({
       ...prev,
@@ -133,7 +136,7 @@ export default function Lancamentos() {
       }
     }
 
-    setCliente(""); setDescricao(""); setTipo(""); setValor(""); setFormItens([emptyItem()]); setShowForm(false);
+    setCliente(""); setDescricao(""); setTipo(""); setValor(""); setVendedor(""); setFormItens([emptyItem()]); setShowForm(false);
     toast.success("Lançamento adicionado com sucesso");
   }
 
@@ -144,6 +147,7 @@ export default function Lancamentos() {
     setEditTipo(entry.tipo || "");
     setEditValor(numberToCurrencyMask(entry.valor));
     setEditData(entry.data);
+    setEditVendedor(entry.vendedor || "");
     setEditErrors({});
     setEditItens([]);
 
@@ -177,7 +181,7 @@ export default function Lancamentos() {
       lancamentos: {
         ...prev.lancamentos,
         [arrKey]: prev.lancamentos[arrKey].map(l =>
-          l.id === editItem.id ? { ...l, cliente: editCliente.trim(), valor: parseCurrencyMask(editValor), data: editData, [fieldKey]: editDescricao.trim(), tipo: editTipo.trim() || undefined } : l
+          l.id === editItem.id ? { ...l, cliente: editCliente.trim(), valor: parseCurrencyMask(editValor), data: editData, [fieldKey]: editDescricao.trim(), tipo: editTipo.trim() || undefined, vendedor: editVendedor || undefined } : l
         ),
       },
     }));
@@ -467,6 +471,13 @@ export default function Lancamentos() {
               <label className="text-[11px] font-medium block mb-1 text-muted-foreground">{tipoLabel}</label>
               <input value={tipo} onChange={e => setTipo(e.target.value)} className="ios-input w-full" placeholder={tipoLabel} />
             </div>
+            <div>
+              <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Vendedor</label>
+              <select value={vendedor} onChange={e => setVendedor(e.target.value)} className="ios-input w-full">
+                <option value="">Selecione</option>
+                {data.vendedores.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Valor (R$)</label>
@@ -546,7 +557,7 @@ export default function Lancamentos() {
                     <span className="text-sm font-medium text-foreground truncate">{e.cliente}</span>
                   </div>
                   <p className="text-xs mt-0.5 ml-3.5 truncate text-muted-foreground">
-                    {getDescricao(e)}{e.tipo ? ` · ${e.tipo}` : ''} · {formatDate(e.data)}
+                    {getDescricao(e)}{e.tipo ? ` · ${e.tipo}` : ''}{e.vendedor ? ` · ${e.vendedor}` : ''} · {formatDate(e.data)}
                   </p>
                 </button>
                 <div className="flex items-center gap-2 flex-shrink-0">
@@ -603,6 +614,13 @@ export default function Lancamentos() {
             <div>
               <label className="text-[11px] font-medium block mb-1 text-muted-foreground">{editTipoLabel}</label>
               <input value={editTipo} onChange={e => setEditTipo(e.target.value)} className="ios-input w-full" placeholder={editTipoLabel} />
+            </div>
+            <div>
+              <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Vendedor</label>
+              <select value={editVendedor} onChange={e => setEditVendedor(e.target.value)} className="ios-input w-full">
+                <option value="">Selecione</option>
+                {data.vendedores.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

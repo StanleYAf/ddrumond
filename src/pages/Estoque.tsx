@@ -1281,18 +1281,9 @@ export default function Estoque() {
                     <input value={formPrecoVenda} onChange={e => setFormPrecoVenda(applyCurrencyMask(e.target.value))} className="ios-input w-full" placeholder="R$ 0,00" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Fornecedor</label>
-                    <select value={formFornecedor} onChange={e => setFormFornecedor(e.target.value)} className="ios-input w-full">
-                      <option value="">Nenhum</option>
-                      {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Nº Série</label>
-                    <input value={formNumeroSerie} onChange={e => setFormNumeroSerie(e.target.value)} className="ios-input w-full" placeholder="Opcional" />
-                  </div>
+                <div>
+                  <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Nº Série</label>
+                  <input value={formNumeroSerie} onChange={e => setFormNumeroSerie(e.target.value)} className="ios-input w-full" placeholder="Opcional" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
