@@ -471,6 +471,13 @@ export default function Lancamentos() {
               <label className="text-[11px] font-medium block mb-1 text-muted-foreground">{tipoLabel}</label>
               <input value={tipo} onChange={e => setTipo(e.target.value)} className="ios-input w-full" placeholder={tipoLabel} />
             </div>
+            <div>
+              <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Vendedor</label>
+              <select value={vendedor} onChange={e => setVendedor(e.target.value)} className="ios-input w-full">
+                <option value="">Selecione</option>
+                {data.vendedores.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[11px] font-medium block mb-1 text-muted-foreground">Valor (R$)</label>
