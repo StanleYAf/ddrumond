@@ -110,6 +110,7 @@ export default function Lancamentos() {
       id: newId, cliente: cliente.trim(), valor: parseCurrencyMask(valor), data: dataLanc,
       [CATEGORIA_FIELD[formCat]]: descricao.trim(),
       tipo: tipo.trim() || undefined,
+      vendedor: vendedor || undefined,
     };
     setData((prev) => ({
       ...prev,
