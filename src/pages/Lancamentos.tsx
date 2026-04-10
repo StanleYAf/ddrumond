@@ -82,6 +82,7 @@ export default function Lancamentos() {
   const [editTipo, setEditTipo] = useState("");
   const [editValor, setEditValor] = useState("");
   const [editData, setEditData] = useState("");
+  const [editVendedor, setEditVendedor] = useState("");
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [editItens, setEditItens] = useState<LancamentoItem[]>([]);
   const [editItensLoading, setEditItensLoading] = useState(false);
