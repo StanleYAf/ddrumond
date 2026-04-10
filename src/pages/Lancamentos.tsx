@@ -135,7 +135,7 @@ export default function Lancamentos() {
       }
     }
 
-    setCliente(""); setDescricao(""); setTipo(""); setValor(""); setFormItens([emptyItem()]); setShowForm(false);
+    setCliente(""); setDescricao(""); setTipo(""); setValor(""); setVendedor(""); setFormItens([emptyItem()]); setShowForm(false);
     toast.success("Lançamento adicionado com sucesso");
   }
 
