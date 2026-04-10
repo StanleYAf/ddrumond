@@ -314,14 +314,8 @@ export default function Estoque() {
       return;
     }
 
-    if (scanForNewProduct) {
-      setScanForNewProduct(false);
-      resetForm();
-      setFormCodigo(code);
-      setShowForm(true);
-      toast.info(`Código ${code} capturado — preencha os dados do produto`);
-      return;
-    }
+
+
     const trimmed = code.trim();
     const found = produtos.find(p => p.codigo_barras?.trim() === trimmed);
     if (found) { setQuickMove({ produto: found, tipo: null, quantidade: 1, observacao: "", documento_ref: "" }); setSearchQuery(""); }
