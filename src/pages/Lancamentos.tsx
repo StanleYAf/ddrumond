@@ -71,6 +71,7 @@ export default function Lancamentos() {
   const [descricao, setDescricao] = useState("");
   const [tipo, setTipo] = useState("");
   const [valor, setValor] = useState("");
+  const [vendedor, setVendedor] = useState("");
   const [dataLanc, setDataLanc] = useState(now.toISOString().slice(0, 10));
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formItens, setFormItens] = useState<Omit<LancamentoItem, "lancamento_id">[]>([emptyItem()]);
