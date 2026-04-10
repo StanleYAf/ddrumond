@@ -147,6 +147,7 @@ export default function Lancamentos() {
     setEditTipo(entry.tipo || "");
     setEditValor(numberToCurrencyMask(entry.valor));
     setEditData(entry.data);
+    setEditVendedor(entry.vendedor || "");
     setEditErrors({});
     setEditItens([]);
 
