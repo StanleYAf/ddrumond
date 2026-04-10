@@ -284,6 +284,16 @@ export default function Estoque() {
   }, [produtos]);
 
   async function handleBarcodeScan(code: string) {
+    // scanForNewProduct has highest priority — user explicitly wants to register
+    if (scanForNewProduct) {
+      setScanForNewProduct(false);
+      resetForm();
+      setFormCodigo(code);
+      setShowForm(true);
+      toast.info(`Código ${code} capturado — preencha os dados do produto`);
+      return;
+    }
+
     // Auto-scan mode: add to pending queue for later approval
     if (autoScanMode && user) {
       const trimmed = code.trim();
@@ -304,14 +314,8 @@ export default function Estoque() {
       return;
     }
 
-    if (scanForNewProduct) {
-      setScanForNewProduct(false);
-      resetForm();
-      setFormCodigo(code);
-      setShowForm(true);
-      toast.info(`Código ${code} capturado — preencha os dados do produto`);
-      return;
-    }
+
+
     const trimmed = code.trim();
     const found = produtos.find(p => p.codigo_barras?.trim() === trimmed);
     if (found) { setQuickMove({ produto: found, tipo: null, quantidade: 1, observacao: "", documento_ref: "" }); setSearchQuery(""); }
