@@ -15,7 +15,7 @@ import Lancamentos from "./pages/Lancamentos";
 import Indicadores from "./pages/Indicadores";
 import PosVenda from "./pages/PosVenda";
 import Configuracoes from "./pages/Configuracoes";
-import Relatorios from "./pages/Relatorios";
+
 import Estoque from "./pages/Estoque";
 import Fornecedores from "./pages/Fornecedores";
 import Vendas from "./pages/Vendas";
