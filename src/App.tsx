@@ -15,7 +15,7 @@ import Lancamentos from "./pages/Lancamentos";
 import Indicadores from "./pages/Indicadores";
 import PosVenda from "./pages/PosVenda";
 import Configuracoes from "./pages/Configuracoes";
-import Relatorios from "./pages/Relatorios";
+
 import Estoque from "./pages/Estoque";
 import Fornecedores from "./pages/Fornecedores";
 import Vendas from "./pages/Vendas";
@@ -50,7 +50,7 @@ const App = () => (
                               <Route path="/indicadores" element={<RoleGuard allowed={["dash", "admin"]}><Indicadores /></RoleGuard>} />
                               <Route path="/pos-venda" element={<RoleGuard allowed={["dash", "admin"]}><PosVenda /></RoleGuard>} />
                               <Route path="/configuracoes" element={<Configuracoes />} />
-                              <Route path="/relatorios" element={<RoleGuard allowed={["dash", "admin"]}><Relatorios /></RoleGuard>} />
+                              
                               <Route path="/estoque" element={<RoleGuard allowed={["estoque", "admin"]}><Estoque /></RoleGuard>} />
                               <Route path="/fornecedores" element={<RoleGuard allowed={["estoque", "admin"]}><Fornecedores /></RoleGuard>} />
                               <Route path="/vendas" element={<RoleGuard allowed={["dash", "admin"]}><Vendas /></RoleGuard>} />

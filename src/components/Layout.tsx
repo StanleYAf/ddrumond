@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
-import { LayoutDashboard, FilePlus, BarChart3, PhoneCall, Settings, FileBarChart, Sun, Moon, Package, LogOut, Kanban, PanelLeftClose, PanelLeft } from "lucide-react";
+import { LayoutDashboard, FilePlus, BarChart3, PhoneCall, Settings, Sun, Moon, Package, LogOut, Kanban, PanelLeftClose, PanelLeft } from "lucide-react";
 import { useTheme } from "@/lib/themeContext";
 import { useAuth } from "@/lib/authContext";
 
@@ -12,7 +12,6 @@ const allNavItems = [
   { title: "Vendas", url: "/vendas", icon: Kanban, group: "dash" },
   { title: "Pós-venda", url: "/pos-venda", icon: PhoneCall, group: "dash" },
   { title: "Estoque", url: "/estoque", icon: Package, group: "estoque" },
-  { title: "Relatórios", url: "/relatorios", icon: FileBarChart, group: "dash" },
   { title: "Config", url: "/configuracoes", icon: Settings, group: "always" },
 ];
 

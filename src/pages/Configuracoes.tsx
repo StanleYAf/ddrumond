@@ -5,7 +5,7 @@ import { useTheme, accentMap, type AccentColor, type ThemeMode } from "@/lib/the
 import { CATEGORIA_LABELS, type Categoria, type AppData } from "@/lib/types";
 import { applyCurrencyMask, parseCurrencyMask, numberToCurrencyMask } from "@/lib/currencyMask";
 import { supabase } from "@/integrations/supabase/client";
-import { loadFromDB } from "@/lib/db";
+
 import { Trash2, Plus, Download, Upload, AlertTriangle, Sun, Moon, Check, User, Shield, Users, Search, Clock, CheckCircle, XCircle } from "lucide-react";
 import { ConfigSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 const CARGOS = [
   { value: "dash", label: "Dash", desc: "Dashboard, lançamentos, indicadores e pós-venda" },
-  { value: "estoque", label: "Estoque", desc: "Estoque e fornecedores" },
+  { value: "estoque", label: "Estoque", desc: "Gestão de estoque" },
   { value: "Controlador", label: "Controlador", desc: "Estoque com aprovação de saídas" },
   { value: "admin", label: "Admin", desc: "Acesso completo" },
 ];
@@ -572,31 +572,6 @@ export default function Configuracoes() {
               <span className="text-sm text-foreground">Importar Dados (JSON)</span>
             </div>
           </button>
-          {isAdmin && (
-            <button
-              onClick={async () => {
-                try {
-                  const d = await loadFromDB();
-                  const blob = new Blob([JSON.stringify(d, null, 2)], { type: "application/json" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = "medihub_backup.json";
-                  a.click();
-                  URL.revokeObjectURL(url);
-                  toast.success("Backup exportado");
-                } catch (e) {
-                  toast.error("Falha ao exportar backup");
-                }
-              }}
-              className="ios-list-item w-full text-left"
-            >
-              <div className="flex items-center gap-3">
-                <Download className="h-4 w-4 text-warning" />
-                <span className="text-sm text-foreground">Exportar dados para migração</span>
-              </div>
-            </button>
-          )}
         </div>
         <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileSelect} className="hidden" />
       </div>
